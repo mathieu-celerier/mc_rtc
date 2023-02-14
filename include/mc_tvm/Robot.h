@@ -13,6 +13,7 @@
 #include <tvm/Variable.h>
 #include <tvm/VariableVector.h>
 #include <tvm/graph/abstract/Node.h>
+#include <tvm/function/BasicLinearFunction.h>
 
 #include <RBDyn/FD.h>
 
@@ -47,8 +48,8 @@ namespace mc_tvm
  */
 struct MC_TVM_DLLAPI Robot : public tvm::graph::abstract::Node<Robot>
 {
-  SET_OUTPUTS(Robot, FK, FV, FA, NormalAcceleration, tau, H, C)
-  SET_UPDATES(Robot, FK, FV, FA, NormalAcceleration, H, C)
+  SET_OUTPUTS(Robot, FK, FV, FA, NormalAcceleration, tau, H, C, ExternalDisturbance)
+  SET_UPDATES(Robot, FK, FV, FA, NormalAcceleration, H, C, ExternalDisturbance)
 
   friend struct mc_rbdyn::Robot;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -101,6 +102,17 @@ public:
     return q_;
   }
 
+  /** Access disturbed q variable (const) */
+  inline const tvm::VariablePtr & qDisturbed() const noexcept
+  {
+    return disturbed_q_;
+  }
+  /** Access disturbed q variable */
+  inline tvm::VariablePtr & qDisturbed() noexcept
+  {
+    return disturbed_q_;
+  }
+
   /** Access q first derivative (joint velocity) (const) */
   inline const tvm::VariablePtr & alpha() const noexcept
   {
@@ -110,6 +122,17 @@ public:
   inline tvm::VariablePtr & alpha() noexcept
   {
     return dq_;
+  }
+
+  /** Access disturbed q variable (const) */
+  inline const tvm::VariablePtr & alphaDisturbed() const noexcept
+  {
+    return disturbed_dq_;
+  }
+  /** Access disturbed q variable */
+  inline tvm::VariablePtr & alphaDisturbed() noexcept
+  {
+    return disturbed_dq_;
   }
 
   /** Access q second derivative (joint acceleration) (const) */
@@ -122,6 +145,18 @@ public:
   {
     return ddq_;
   }
+
+  /** Access disturbed q variable (const) */
+  inline const tvm::VariablePtr & alphaDDisturbed() const noexcept
+  {
+    return disturbed_ddq_;
+  }
+  /** Access disturbed q variable */
+  inline tvm::VariablePtr & alphaDDisturbed() noexcept
+  {
+    return disturbed_ddq_;
+  }
+
 
   /** Access floating-base variable (const) */
   inline const tvm::VariablePtr & qFloatingBase() const noexcept
@@ -270,6 +305,8 @@ private:
   tvm::VariablePtr q_fb_;
   /** Joints variable */
   tvm::VariablePtr q_joints_;
+  /** Disturbed joints variable */
+  tvm::VariablePtr disturbed_q_;
   /** Generalized configuration variable */
   tvm::VariablePtr q_;
   /** Map mimic leader joint to their followers */
@@ -278,12 +315,22 @@ private:
   tvm::VariablePtr dq_;
   /** Double derivative of q */
   tvm::VariablePtr ddq_;
+  /** Disturbed derivative of q */
+  tvm::VariablePtr disturbed_dq_;
+  /** Disturbed double derivative of q */
+  tvm::VariablePtr disturbed_ddq_;
+  /** Difference between double derivative of q and disturbed double derivative of q */
+  // std::shared_ptr<>;
+  /** Joint acceleration generated from external disturbance */
+  Eigen::VectorXd disturbance_;
   /** Tau variable */
   tvm::VariablePtr tau_;
   /** Normal accelerations of the bodies */
   std::vector<sva::MotionVecd> normalAccB_;
   /** Forward dynamics algorithm associated to this robot */
   rbd::ForwardDynamics fd_;
+  /** Jacobian associated to this robot's force sensor*/
+  rbd::Jacobian jac_;
   /** CoM algorithm of this robot */
   CoMPtr com_;
   /** Momentum algorithm of this robot */
@@ -300,6 +347,7 @@ private:
   void updateNormalAcceleration();
   void updateH();
   void updateC();
+  void updateExternalDisturbance();
 };
 
 } // namespace mc_tvm
