@@ -21,7 +21,7 @@ static inline void updateVar(const std::vector<std::vector<double>> & value, tvm
 }
 
 Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
-: robot_(robot), normalAccB_(robot.mbc().bodyAccB.size(), sva::MotionVecd::Zero()), fd_(robot.mb())
+: robot_(robot), normalAccB_(robot.mbc().bodyAccB.size(), sva::MotionVecd::Zero()), fd_(robot.mb()), jac_(robot_.mb(), robot.forceSensors()[0].parentBody())
 {
   limits_.ql = rbd::paramToVector(robot_.mb(), robot_.ql());
   limits_.qu = rbd::paramToVector(robot_.mb(), robot_.qu());
@@ -43,6 +43,7 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   // Create TVM variables
   {
     q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name());
+    disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name()+"_disturbed_q");
     if(robot.mb().nrJoints() > 0 && robot.mb().joint(0).type() == rbd::Joint::Free)
     {
       q_fb_ = q_->subvariable(tvm::Space(6, 7, 6), "qFloatingBase");
@@ -127,11 +128,17 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   tau_ = tvm::Space(robot.mb().nrDof()).createVariable(robot.name() + "_tau");
   dq_ = tvm::dot(q_, 1);
   ddq_ = tvm::dot(q_, 2);
+  disturbed_dq_ = tvm::dot(disturbed_q_, 1);
+  disturbed_ddq_ = tvm::dot(disturbed_q_, 2);
   Eigen::VectorXd q_init = q_->value();
   rbd::paramToVector(robot.mbc().q, q_init);
   q_->set(q_init);
   dq_->setZero();
   ddq_->setZero();
+  disturbed_q_->set(q_init);
+  disturbed_dq_->setZero();
+  disturbed_ddq_->setZero();
+  disturbance_ = ddq_->value();
   tau_->setZero();
 
   const auto & rjo = robot.refJointOrder();
@@ -156,7 +163,7 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   /** Signal setup */
   registerUpdates(Update::FK, &Robot::updateFK, Update::FV, &Robot::updateFV, Update::FA, &Robot::updateFA,
                   Update::NormalAcceleration, &Robot::updateNormalAcceleration, Update::H, &Robot::updateH, Update::C,
-                  &Robot::updateC);
+                  &Robot::updateC, Update::ExternalDisturbance, &Robot::updateExternalDisturbance);
   /** Output dependencies setup */
   addOutputDependency(Output::FK, Update::FK);
   addOutputDependency(Output::FV, Update::FV);
@@ -165,22 +172,27 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   addOutputDependency(Output::H, Update::H);
   addOutputDependency(Output::C, Update::C);
   addOutputDependency(Output::FV, Update::FV);
+  addOutputDependency(Output::ExternalDisturbance, Update::ExternalDisturbance);
   /** Internal dependencies setup */
   addInternalDependency(Update::FV, Update::FK);
   addInternalDependency(Update::H, Update::FV);
   addInternalDependency(Update::C, Update::FV);
   addInternalDependency(Update::FA, Update::FV);
   addInternalDependency(Update::NormalAcceleration, Update::FV);
+  addInternalDependency(Update::ExternalDisturbance, Update::H);
+  addInternalDependency(Update::ExternalDisturbance, Update::FA);
 }
 
 void Robot::updateFK()
 {
   updateVar(robot_.mbc().q, *q_);
+  updateVar(robot_.mbc().q, *disturbed_q_);
 }
 
 void Robot::updateFV()
 {
   updateVar(robot_.mbc().alpha, *dq_);
+  updateVar(robot_.mbc().alpha, *disturbed_dq_);
 }
 
 void Robot::updateFA()
@@ -214,6 +226,16 @@ void Robot::updateH()
 void Robot::updateC()
 {
   fd_.computeC(robot_.mb(), robot_.mbc());
+}
+
+void Robot::updateExternalDisturbance()
+{
+  auto rjo = robot_.refJointOrder();
+  auto & ft_sensor = robot_.forceSensors()[0];
+  auto wrench = ft_sensor.worldWrenchWithoutGravity(robot_).vector();
+  auto jac = jac_.jacobian(robot_.mb(),robot_.mbc());
+  Eigen::VectorXd tau_e = jac.transpose()*wrench;
+  disturbance_ = H().inverse()*tau_e;
 }
 
 tvm::VariablePtr Robot::qJoint(size_t jIdx)
