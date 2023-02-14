@@ -103,12 +103,12 @@ public:
   /** Access q first derivative (joint velocity) */
   inline tvm::VariablePtr & alpha() noexcept { return dq_; }
 
-  /** Access disturbed q variable (const) */
+  /** Access disturbed q first derivative (joint acceleration) (const) */
   inline const tvm::VariablePtr & alphaDisturbed() const noexcept
   {
     return disturbed_dq_;
   }
-  /** Access disturbed q variable */
+  /** Access disturbed q first derivative (joint acceleration) */
   inline tvm::VariablePtr & alphaDisturbed() noexcept
   {
     return disturbed_dq_;
@@ -119,17 +119,27 @@ public:
   /** Access q second derivative (joint acceleration) */
   inline tvm::VariablePtr & alphaD() noexcept { return ddq_; }
 
-  /** Access disturbed q variable (const) */
+  /** Access disturbed q second derivative (joint acceleration) (const) */
   inline const tvm::VariablePtr & alphaDDisturbed() const noexcept
   {
     return disturbed_ddq_;
   }
-  /** Access disturbed q variable */
+  /** Access disturbed q second derivative (joint acceleration) */
   inline tvm::VariablePtr & alphaDDisturbed() noexcept
   {
     return disturbed_ddq_;
   }
 
+  /** Access disturbance on q second derivative (joint acceleration) (const) */
+  inline const Eigen::VectorXd alphaDDisturbance() const noexcept
+  {
+    return disturbance_;
+  }
+  /** Access disturbance on q second derivative (joint acceleration) */
+  inline Eigen::VectorXd alphaDDisturbance() noexcept
+  {
+    return disturbance_;
+  }
 
   /** Access floating-base variable (const) */
   inline const tvm::VariablePtr & qFloatingBase() const noexcept { return q_fb_; }

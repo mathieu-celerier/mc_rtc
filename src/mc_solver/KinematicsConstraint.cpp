@@ -52,7 +52,7 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
     }
   }
   auto jl = solver.problem().add(
-      ql <= tvm_robot.qJoints() <= qu,
+      ql <= tvm_robot.qDisturbed() <= qu,
       tvm::task_dynamics::VelocityDamper(solver.dt(), {di, ds, Eigen::VectorXd::Constant(nParams, 1, 0),
                                                        Eigen::VectorXd::Constant(nParams, 1, damper_[2])}),
       {tvm::requirements::PriorityLevel(0)});
@@ -63,15 +63,18 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
   auto vl = tvm_robot.limits().vl.segment(startDof, nDof) * velocityPercent_;
   auto vu = tvm_robot.limits().vu.segment(startDof, nDof) * velocityPercent_;
   auto vL =
-      solver.problem().add(vl <= tvm::dot(tvm_robot.qJoints()) <= vu, tvm::task_dynamics::Proportional(1 / solver.dt()),
+      solver.problem().add(vl <= tvm::dot(tvm_robot.qDisturbed()) <= vu, tvm::task_dynamics::Proportional(1 / solver.dt()),
                            {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(vL);
   /** Acceleration limits */
   auto al = tvm_robot.limits().al.segment(startDof, nDof);
   auto au = tvm_robot.limits().au.segment(startDof, nDof);
-  auto aL = solver.problem().add(al <= tvm::dot(tvm_robot.qJoints(), 2) <= au, tvm::task_dynamics::None{},
+  auto aL = solver.problem().add(al <= tvm::dot(tvm_robot.qDisturbed(), 2) <= au, tvm::task_dynamics::None{},
                                  {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(aL);
+  /** Constraint disturbed joint acceleration and joint acceleration difference to be equal to disturbances */
+  auto aD = solver.problem().add((tvm::dot(tvm_robot.qDisturbed(),2) - tvm::dot(tvm_robot.qJoints(),2)) == tvm_robot.alphaDDisturbance());
+
   /** Mimic constraints */
   for(const auto & m : tvm_robot.mimics())
   {
