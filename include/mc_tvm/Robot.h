@@ -158,12 +158,12 @@ public:
   }
 
   /** Access disturbance on q second derivative (joint acceleration) (const) */
-  inline const Eigen::VectorXd alphaDDisturbance() const noexcept
+  inline const Eigen::VectorXd & alphaDDisturbance() const noexcept
   {
     return disturbance_;
   }
   /** Access disturbance on q second derivative (joint acceleration) */
-  inline Eigen::VectorXd alphaDDisturbance() noexcept
+  inline Eigen::VectorXd & alphaDDisturbance() noexcept
   {
     return disturbance_;
   }
