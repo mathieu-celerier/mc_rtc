@@ -43,17 +43,19 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   // Create TVM variables
   {
     q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name());
-    disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name()+"_disturbed_q");
+    disturbed_q_ = nullptr;
     if(robot.mb().nrJoints() > 0 && robot.mb().joint(0).type() == rbd::Joint::Free)
     {
       q_fb_ = q_->subvariable(tvm::Space(6, 7, 6), "qFloatingBase");
       q_joints_ = q_->subvariable(tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6),
                                   "qJoints", tvm::Space(6, 7, 6));
+      disturbed_q_= tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6).createVariable(robot.name()+"_disturbed_q");
     }
     else
     {
       q_fb_ = q_->subvariable(tvm::Space(0), "qFloatingBase");
       q_joints_ = q_;
+      disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name()+"_disturbed_q");
     }
     Eigen::VectorXd mimicMultiplier = Eigen::VectorXd(0);
     std::unordered_map<size_t, tvm::VariablePtr> mimicLeaders;
@@ -138,7 +140,7 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   disturbed_q_->set(q_init);
   disturbed_dq_->setZero();
   disturbed_ddq_->setZero();
-  disturbance_ = ddq_->value();
+  disturbance_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
   tau_->setZero();
 
   const auto & rjo = robot.refJointOrder();
@@ -230,12 +232,15 @@ void Robot::updateC()
 
 void Robot::updateExternalDisturbance()
 {
+  mc_rtc::log::info("[mc_tvm::Robot] ddq disturbed = {} | ddq = {} | ddq disturbance = {}",disturbed_ddq_->value().transpose(), ddq_->value().transpose(), disturbance_.transpose());
   auto rjo = robot_.refJointOrder();
   auto & ft_sensor = robot_.forceSensors()[0];
   auto wrench = ft_sensor.worldWrenchWithoutGravity(robot_).vector();
   auto jac = jac_.jacobian(robot_.mb(),robot_.mbc());
   Eigen::VectorXd tau_e = jac.transpose()*wrench;
   disturbance_ = H().inverse()*tau_e;
+
+  disturbed_ddq_->set(ddq_->value()+disturbance_);
 }
 
 tvm::VariablePtr Robot::qJoint(size_t jIdx)
