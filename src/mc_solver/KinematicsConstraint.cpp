@@ -80,6 +80,7 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
     tvm::task_dynamics::None{},
     tvm::requirements::PriorityLevel(0)
   );
+  // auto aD = solver.problem().add(tvm_robot.qDisturbed() - tvm_robot.qJoints() == 0., tvm::task_dynamics::None{}, tvm::requirements::PriorityLevel(0));
   constraints_.push_back(aD);
 
   /** Mimic constraints */
