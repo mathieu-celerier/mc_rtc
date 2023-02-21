@@ -242,6 +242,8 @@ void Robot::updateExternalDisturbance()
 
   disturbed_ddq_->set(ddq_->value()+disturbance_);
   mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
+  mc_rtc::log::info("\t q disturbed    = {}",disturbed_q_->value().transpose());
+  mc_rtc::log::info("\t dq disturbed    = {}",disturbed_dq_->value().transpose());
   mc_rtc::log::info("\t ddq disturbed   = {}",disturbed_ddq_->value().transpose());
   mc_rtc::log::info("\t ddq             = {}", ddq_->value().transpose());
   mc_rtc::log::info("\t ddq disturbance = {}", disturbance_.transpose());
