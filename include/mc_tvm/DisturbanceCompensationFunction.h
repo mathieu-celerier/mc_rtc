@@ -6,8 +6,9 @@
 #pragma once
 
 #include <mc_tvm/api.h>
+#include <mc_tvm/Robot.h>
 
-#include <mc_rbdyn/fwd.h>
+// #include <mc_rbdyn/fwd.h>
 
 #include <tvm/function/abstract/LinearFunction.h>
 
@@ -22,14 +23,13 @@ public:
     /** Constructor
      *
      */
-    DisturbanceCompensationFunction(const mc_rbdyn::Robot & robot, tvm::VariablePtr ddq_dist, tvm::VariablePtr ddq, Eigen::VectorXd & dist);
+    DisturbanceCompensationFunction(mc_tvm::Robot & robot);
 
-    void updateValue();
+    inline void updateValue() { updateValue_(); };
+    void updateValue_() override;
 
 private:
-    tvm::Variable & ddq_dist_;
-    tvm::Variable & ddq_;
-    Eigen::VectorXd & dist_;
+    const mc_tvm::Robot & robot_;
 };
 
 }
