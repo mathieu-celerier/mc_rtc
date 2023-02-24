@@ -74,7 +74,7 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
                                  {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(aL);
   /** Constraint disturbed joint acceleration and joint acceleration difference to be equal to disturbances */
-  auto eDist = std::make_shared<mc_tvm::DisturbanceCompensationFunction>(robot_,tvm::dot(tvm_robot.qDisturbed(),2),tvm::dot(tvm_robot.qJoints(),2), tvm_robot.alphaDDisturbance());
+  auto eDist = std::make_shared<mc_tvm::DisturbanceCompensationFunction>(tvm_robot);
   auto aD = solver.problem().add(
     eDist == 0.,
     tvm::task_dynamics::None{},
