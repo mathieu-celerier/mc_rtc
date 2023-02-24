@@ -9,16 +9,18 @@ namespace mc_tvm
 DisturbanceCompensationFunction::DisturbanceCompensationFunction(mc_tvm::Robot & robot)
 : LinearFunction(robot.robot().mb().nrDof()), robot_(robot)
 {
-    registerUpdates(Update::Value, &DisturbanceCompensationFunction::updateValue);
-    addInputDependency<DisturbanceCompensationFunction>(Update::Value, robot_.robot().tvmRobot(), mc_tvm::Robot::Output::ExternalDisturbance);
-    addOutputDependency<DisturbanceCompensationFunction>(Output::Value, Update::Value);
+    registerUpdates(Update::B, &DisturbanceCompensationFunction::updateB);
+    addOutputDependency<DisturbanceCompensationFunction>(Output::B, Update::B);
+    addInputDependency<DisturbanceCompensationFunction>(Update::B, robot_.robot().tvmRobot(), mc_tvm::Robot::Output::ExternalDisturbance);
     addVariable(robot.alphaD(), true);
     addVariable(robot.alphaDDisturbed(), true);
     size_t nDof = robot.robot().mb().nrDof();
-    jacobian_.at(&*robot.alphaDDisturbed()) = Eigen::MatrixXd::Identity(nDof,nDof);
-    jacobian_.at(&*robot.alphaD()) = -Eigen::MatrixXd::Identity(nDof,nDof);
+    jacobian_[robot.alphaDDisturbed().get()] = Eigen::MatrixXd::Identity(nDof,nDof);
+    jacobian_[robot.alphaDDisturbed().get()].properties(tvm::internal::MatrixProperties::IDENTITY);
+    jacobian_[robot.alphaD().get()] = -Eigen::MatrixXd::Identity(nDof,nDof);
+    jacobian_[robot.alphaD().get()].properties(tvm::internal::MatrixProperties::MINUS_IDENTITY);
 }
 
-void DisturbanceCompensationFunction::updateValue_() { value_ = robot_.alphaDDisturbed()->value() - robot_.alphaD()->value() - robot_.alphaDDisturbance(); }
+void DisturbanceCompensationFunction::updateB() { b_ = robot_.alphaDDisturbance(); }
 
 }

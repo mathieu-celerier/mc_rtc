@@ -19,16 +19,15 @@ namespace mc_tvm
 class MC_TVM_DLLAPI DisturbanceCompensationFunction : public tvm::function::abstract::LinearFunction
 {
 public:
-    SET_UPDATES(DisturbanceCompensationFunction, Value)
+    DISABLE_OUTPUTS(Output::JDot)
+    SET_UPDATES(DisturbanceCompensationFunction, B)
     /** Constructor
      *
      */
     DisturbanceCompensationFunction(mc_tvm::Robot & robot);
 
-    inline void updateValue() { updateValue_(); };
-    void updateValue_() override;
-
 private:
+    void updateB();
     const mc_tvm::Robot & robot_;
 };
 
