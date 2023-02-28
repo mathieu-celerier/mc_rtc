@@ -249,22 +249,18 @@ void Robot::updateC()
 void Robot::updateExternalDisturbance()
 {
   auto rjo = robot_.refJointOrder();
-  auto & ft_sensor = robot_.forceSensors()[0];
-  auto wrench = ft_sensor.worldWrenchWithoutGravity(robot_).vector();
-  auto jac = jac_.jacobian(robot_.mb(),robot_.mbc());
-  Eigen::VectorXd tau_e(robot_.mb().nrDof());
-  tau_e << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; // = jac.transpose()*wrench;
+  auto & ext_torques_sensor = robot_.device<mc_rbdyn::ExternalTorqueSensor>("externalTorqueSensor");
+  auto tau_e = ext_torques_sensor.torques();
   disturbance_ = H().inverse()*tau_e;
 
   disturbed_ddq_->set(ddq_->value()+disturbance_);
-  mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
-  mc_rtc::log::info("\t q disturbed    = {}",disturbed_q_->value().transpose());
-  mc_rtc::log::info("\t dq disturbed    = {}",disturbed_dq_->value().transpose());
-  mc_rtc::log::info("\t ddq disturbed   = {}",disturbed_ddq_->value().transpose());
-  mc_rtc::log::info("\t ddq             = {}", ddq_->value().transpose());
-  mc_rtc::log::info("\t ddq disturbance = {}", disturbance_.transpose());
-  mc_rtc::log::info("\t external torque = {}", tau_e.transpose());
-  mc_rtc::log::info("\t external forces = {}", wrench.transpose());
+  // mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
+  // mc_rtc::log::info("\t q disturbed     = {}",disturbed_q_->value().transpose());
+  // mc_rtc::log::info("\t dq disturbed    = {}",disturbed_dq_->value().transpose());
+  // mc_rtc::log::info("\t ddq disturbed   = {}",disturbed_ddq_->value().transpose());
+  // mc_rtc::log::info("\t ddq             = {}", ddq_->value().transpose());
+  // mc_rtc::log::info("\t ddq disturbance = {}", disturbance_.transpose());
+  // mc_rtc::log::info("\t external torque = {}", tau_e.transpose());
 }
 
 tvm::VariablePtr Robot::qJoint(size_t jIdx)
