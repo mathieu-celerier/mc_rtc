@@ -21,6 +21,6 @@ DisturbanceCompensationFunction::DisturbanceCompensationFunction(mc_tvm::Robot &
     jacobian_[robot.alphaD().get()].properties(tvm::internal::MatrixProperties::MINUS_IDENTITY);
 }
 
-void DisturbanceCompensationFunction::updateB() { b_ = robot_.alphaDDisturbance(); }
+void DisturbanceCompensationFunction::updateB() { b_ = -robot_.alphaDDisturbance(); }
 
 }
