@@ -14,6 +14,7 @@
 #include <tvm/VariableVector.h>
 #include <tvm/graph/abstract/Node.h>
 #include <tvm/function/BasicLinearFunction.h>
+#include <mc_rbdyn/ExternalTorqueSensor.h>
 
 #include <RBDyn/FD.h>
 
