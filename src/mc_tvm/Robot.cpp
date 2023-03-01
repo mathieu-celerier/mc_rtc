@@ -140,7 +140,7 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   disturbed_q_->set(q_init);
   disturbed_dq_->setZero();
   disturbed_ddq_->setZero();
-  disturbance_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
+  disturbance_ddq_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
   tau_->setZero();
 
   const auto & rjo = robot.refJointOrder();
@@ -234,16 +234,16 @@ void Robot::updateExternalDisturbance()
 {
   auto rjo = robot_.refJointOrder();
   auto & ext_torques_sensor = robot_.device<mc_rbdyn::ExternalTorqueSensor>("externalTorqueSensor");
-  auto tau_e = ext_torques_sensor.torques();
-  disturbance_ = H().inverse()*tau_e;
+  tau_e_ = ext_torques_sensor.torques();
+  disturbance_ddq_ = H().inverse()*tau_e_;
 
-  disturbed_ddq_->set(ddq_->value()+disturbance_);
+  disturbed_ddq_->set(ddq_->value()+disturbance_ddq_);
   // mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
   // mc_rtc::log::info("\t q disturbed     = {}",disturbed_q_->value().transpose());
   // mc_rtc::log::info("\t dq disturbed    = {}",disturbed_dq_->value().transpose());
   // mc_rtc::log::info("\t ddq disturbed   = {}",disturbed_ddq_->value().transpose());
   // mc_rtc::log::info("\t ddq             = {}", ddq_->value().transpose());
-  // mc_rtc::log::info("\t ddq disturbance = {}", disturbance_.transpose());
+  // mc_rtc::log::info("\t ddq disturbance = {}", disturbance_ddq_.transpose());
   // mc_rtc::log::info("\t external torque = {}", tau_e.transpose());
 }
 

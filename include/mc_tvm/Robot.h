@@ -134,12 +134,12 @@ public:
   /** Access disturbance on q second derivative (joint acceleration) (const) */
   inline const Eigen::VectorXd & alphaDDisturbance() const noexcept
   {
-    return disturbance_;
+    return disturbance_ddq_;
   }
   /** Access disturbance on q second derivative (joint acceleration) */
   inline Eigen::VectorXd & alphaDDisturbance() noexcept
   {
-    return disturbance_;
+    return disturbance_ddq_;
   }
 
   /** Access floating-base variable (const) */
@@ -179,6 +179,17 @@ public:
   inline const tvm::VariablePtr & tau() const noexcept { return tau_; }
   /** Access tau variable */
   inline tvm::VariablePtr & tau() { return tau_; }
+
+  /** Access torque from external forces (const) */
+  inline const Eigen::VectorXd & tau_e() const noexcept
+  {
+    return tau_e_;
+  }
+  /** Access torque from external forces variable */
+  inline Eigen::VectorXd & tau_e()
+  {
+    return tau_e_;
+  }
 
   /** Returns the CoM algorithm associated to this robot (const) */
   inline const CoM & comAlgo() const noexcept { return *com_; }
@@ -258,9 +269,11 @@ private:
   /** Difference between double derivative of q and disturbed double derivative of q */
   // std::shared_ptr<>;
   /** Joint acceleration generated from external disturbance */
-  Eigen::VectorXd disturbance_;
+  Eigen::VectorXd disturbance_ddq_;
   /** Tau variable */
   tvm::VariablePtr tau_;
+  /** Torque from external disturbance */
+  Eigen::VectorXd tau_e_;
   /** Normal accelerations of the bodies */
   std::vector<sva::MotionVecd> normalAccB_;
   /** Forward dynamics algorithm associated to this robot */

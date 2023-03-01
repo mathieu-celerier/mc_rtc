@@ -20,6 +20,7 @@ DynamicFunction::DynamicFunction(const mc_rbdyn::Robot & robot)
   auto & tvm_robot = robot.tvmRobot();
   addInputDependency<DynamicFunction>(Update::Jacobian, tvm_robot, Robot::Output::H);
   addInputDependency<DynamicFunction>(Update::B, tvm_robot, Robot::Output::C);
+  addInputDependency<DynamicFunction>(Update::B, tvm_robot, Robot::Output::ExternalDisturbance);
   addVariable(tvm::dot(tvm_robot.q(), 2), true);
   addVariable(tvm_robot.tau(), true);
   jacobian_[tvm_robot.tau().get()] = -Eigen::MatrixXd::Identity(robot_.mb().nrDof(), robot_.mb().nrDof());
@@ -102,7 +103,7 @@ sva::ForceVecd DynamicFunction::contactForce(const mc_rbdyn::RobotFrame & frame)
 
 void DynamicFunction::updateb()
 {
-  b_ = robot_.tvmRobot().C();
+  b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e();
 }
 
 void DynamicFunction::updateJacobian()
