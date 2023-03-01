@@ -236,9 +236,9 @@ set(mc_rbdyn_SRC
     mc_rbdyn/Frame.cpp
     mc_rbdyn/RobotFrame.cpp
     mc_rbdyn/ExternalTorqueSensor.cpp
-)
+    )
 
-set(mc_rbdyn_HDR
+    set(mc_rbdyn_HDR
     ../include/mc_rbdyn/api.h
     ../include/mc_rbdyn/fwd.h
     ../include/mc_rbdyn/hat.h
