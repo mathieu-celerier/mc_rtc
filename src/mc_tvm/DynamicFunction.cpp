@@ -10,8 +10,8 @@
 namespace mc_tvm
 {
 
-DynamicFunction::DynamicFunction(const mc_rbdyn::Robot & robot)
-: tvm::function::abstract::LinearFunction(robot.mb().nrDof()), robot_(robot)
+DynamicFunction::DynamicFunction(const mc_rbdyn::Robot & robot, bool addExternalTorques)
+: tvm::function::abstract::LinearFunction(robot.mb().nrDof()), robot_(robot), useExternalForces_(addExternalTorques)
 {
   registerUpdates(Update::B, &DynamicFunction::updateb);
   registerUpdates(Update::Jacobian, &DynamicFunction::updateJacobian);
@@ -20,7 +20,10 @@ DynamicFunction::DynamicFunction(const mc_rbdyn::Robot & robot)
   auto & tvm_robot = robot.tvmRobot();
   addInputDependency<DynamicFunction>(Update::Jacobian, tvm_robot, Robot::Output::H);
   addInputDependency<DynamicFunction>(Update::B, tvm_robot, Robot::Output::C);
-  addInputDependency<DynamicFunction>(Update::B, tvm_robot, Robot::Output::ExternalDisturbance);
+  if (addExternalTorques)
+  {
+    addInputDependency<DynamicFunction>(Update::B, tvm_robot, Robot::Output::ExternalDisturbance);
+  }
   addVariable(tvm::dot(tvm_robot.q(), 2), true);
   addVariable(tvm_robot.tau(), true);
   jacobian_[tvm_robot.tau().get()] = -Eigen::MatrixXd::Identity(robot_.mb().nrDof(), robot_.mb().nrDof());
@@ -115,7 +118,15 @@ sva::ForceVecd DynamicFunction::contactForce(const mc_rbdyn::RobotFrame & frame)
 
 void DynamicFunction::updateb()
 {
-  b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e();
+  if (useExternalForces_)
+  {
+    b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e();
+  }
+  else
+  {
+    b_ = robot_.tvmRobot().C();
+  }
+  
 }
 
 void DynamicFunction::updateJacobian()

@@ -76,23 +76,24 @@ static mc_rtc::void_ptr initialize_tasks(const mc_rbdyn::Robots & robots,
   }
 }
 
-mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot)
+mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot, bool useExternalForces)
 {
-  return mc_rtc::make_void_ptr<mc_tvm::DynamicFunctionPtr>(std::make_shared<mc_tvm::DynamicFunction>(robot));
+  return mc_rtc::make_void_ptr<mc_tvm::DynamicFunctionPtr>(std::make_shared<mc_tvm::DynamicFunction>(robot, useExternalForces));
 }
 
 static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
                                    const mc_rbdyn::Robots & robots,
                                    unsigned int robotIndex,
                                    double timeStep,
-                                   bool infTorque)
+                                   bool infTorque,
+                                   bool useExternalForces)
 {
   switch(backend)
   {
     case QPSolver::Backend::Tasks:
       return initialize_tasks(robots, robotIndex, timeStep, infTorque);
     case QPSolver::Backend::TVM:
-      return initialize_tvm(robots.robot(robotIndex));
+      return initialize_tvm(robots.robot(robotIndex), useExternalForces);
     default:
       mc_rtc::log::error_and_throw("[DynamicsConstraint] Not implemented for solver backend: {}", backend);
   }
@@ -101,9 +102,10 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
 DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        unsigned int robotIndex,
                                        double timeStep,
-                                       bool infTorque)
+                                       bool infTorque,
+                                       bool addExternalTorques)
 : KinematicsConstraint(robots, robotIndex, timeStep),
-  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque)), robotIndex_(robotIndex)
+  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)), robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
 {
 }
 
@@ -112,9 +114,10 @@ DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        double timeStep,
                                        const std::array<double, 3> & damper,
                                        double velocityPercent,
-                                       bool infTorque)
+                                       bool infTorque,
+                                       bool addExternalTorques)
 : KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent),
-  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque)), robotIndex_(robotIndex)
+  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)), robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
 {
 }
 
