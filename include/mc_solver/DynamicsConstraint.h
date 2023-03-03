@@ -29,7 +29,7 @@ public:
    * \param timeStep Solver timestep
    * \param infTorque If true, ignore the torque limits set in the robot model
    */
-  DynamicsConstraint(const mc_rbdyn::Robots & robots, unsigned int robotIndex, double timeStep, bool infTorque = false);
+  DynamicsConstraint(const mc_rbdyn::Robots & robots, unsigned int robotIndex, double timeStep, bool infTorque = false, bool addExternalTorques = false);
 
   /** Constructor
    * Builds a damped joint limits constraint and a motion constr depending on
@@ -48,7 +48,8 @@ public:
                      double timeStep,
                      const std::array<double, 3> & damper,
                      double velocityPercent = 1.0,
-                     bool infTorque = false);
+                     bool infTorque = false,
+                     bool addExternalTorques = false);
 
   /** Returns the tasks::qp::MotionConstr
    *
@@ -91,6 +92,8 @@ protected:
   mc_rtc::void_ptr motion_constr_;
   /** Robot index for the constraint */
   unsigned int robotIndex_;
+  /** If torques due to external forces are included in the model*/
+  bool useExternalForces_;
 };
 
 } // namespace mc_solver

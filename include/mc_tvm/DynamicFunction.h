@@ -36,7 +36,7 @@ public:
   SET_UPDATES(DynamicFunction, Jacobian, B)
 
   /** Construct the equation of motion for a given robot */
-  DynamicFunction(const mc_rbdyn::Robot & robot);
+  DynamicFunction(const mc_rbdyn::Robot & robot, bool addExternalTorques);
 
   /** Add a contact to the function
    *
@@ -107,6 +107,8 @@ protected:
     Eigen::MatrixXd force_jac_;
     Eigen::MatrixXd full_jac_;
   };
+  bool useExternalForces_;
+  
   std::vector<ForceContact> contacts_;
 
   std::vector<ForceContact>::const_iterator findContact(const mc_rbdyn::RobotFrame & frame) const;
