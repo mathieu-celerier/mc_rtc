@@ -6,6 +6,7 @@
 
 #include <mc_tvm/Robot.h>
 #include <mc_tvm/RobotFrame.h>
+#include <mc_rbdyn/VirtualTorqueSensor.h>
 
 namespace mc_tvm
 {
@@ -120,7 +121,10 @@ void DynamicFunction::updateb()
 {
   if (useExternalForces_)
   {
-    b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e();
+    auto & virtTorqueSensor = robot_.device<mc_rbdyn::VirtualTorqueSensor>("virtualTorqueSensor");
+    mc_rtc::log::info("[mc_tvm] external torque {}", robot_.tvmRobot().tau_e().transpose());
+    mc_rtc::log::info("[mc_tvm] virtual torque {}", virtTorqueSensor.torques().transpose());
+    b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e() + virtTorqueSensor.torques();
   }
   else
   {

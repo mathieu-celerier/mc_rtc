@@ -253,7 +253,7 @@ void Robot::updateExternalDisturbance()
   tau_e_ = ext_torques_sensor.torques();
   disturbance_ddq_ = H().inverse()*tau_e_;
 
-  disturbed_ddq_->set(ddq_->value()+disturbance_ddq_);
+  // disturbed_ddq_->set(ddq_->value()+disturbance_ddq_);
   // mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
   // mc_rtc::log::info("\t q disturbed     = {}",disturbed_q_->value().transpose());
   // mc_rtc::log::info("\t dq disturbed    = {}",disturbed_dq_->value().transpose());
