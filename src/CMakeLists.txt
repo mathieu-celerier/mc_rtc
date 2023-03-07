@@ -236,9 +236,10 @@ set(mc_rbdyn_SRC
     mc_rbdyn/Frame.cpp
     mc_rbdyn/RobotFrame.cpp
     mc_rbdyn/ExternalTorqueSensor.cpp
-    )
+    mc_rbdyn/VirtualTorqueSensor.cpp
+)
 
-    set(mc_rbdyn_HDR
+set(mc_rbdyn_HDR
     ../include/mc_rbdyn/api.h
     ../include/mc_rbdyn/fwd.h
     ../include/mc_rbdyn/hat.h
@@ -278,6 +279,7 @@ set(mc_rbdyn_SRC
     ../include/mc_rbdyn/RobotFrame.h
     ../include/mc_rbdyn/JointSensor.h
     ../include/mc_rbdyn/ExternalTorqueSensor.h
+    ../include/mc_rbdyn/VirtualTorqueSensor.h
 )
 
 set(mc_tvm_HDR_DIR ../include/mc_tvm)
