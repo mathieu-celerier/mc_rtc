@@ -7,7 +7,7 @@ namespace mc_tasks
 {
 
 CompliantPostureTask::CompliantPostureTask(const mc_solver::QPSolver & solver, unsigned int rIndex, double stiffness, double weight)
-    : PostureTask(solver, rIndex, stiffness, weight), isCompliant_(true),
+    : PostureTask(solver, rIndex, stiffness, weight), isCompliant_(false),
     tvm_robot_(solver.robots().robot(rIndex).tvmRobot()), 
     refAccel_(Eigen::VectorXd::Zero(solver.robots().robot(rIndex).mb().nrDof()))
 {

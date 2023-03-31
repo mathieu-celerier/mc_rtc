@@ -64,7 +64,7 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
   auto vl = tvm_robot.limits().vl.segment(startDof, nDof) * velocityPercent_;
   auto vu = tvm_robot.limits().vu.segment(startDof, nDof) * velocityPercent_;
   auto vL =
-      solver.problem().add(vl <= tvm::dot(tvm_robot.qJoints()) <= vu, tvm::task_dynamics::Proportional(1 / solver.dt()),
+      solver.problem().add(vl <= tvm::dot(tvm_robot.qJoints()) <= vu, tvm::task_dynamics::Proportional(100),
                            {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(vL);
   /** Acceleration limits */
