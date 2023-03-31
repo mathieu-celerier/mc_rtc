@@ -152,6 +152,7 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   disturbed_ddq_->setZero();
   disturbance_ddq_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
   tau_->setZero();
+  tau_e_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
 
   const auto & rjo = robot.refJointOrder();
   refJointIndexToQIndex_.resize(rjo.size());

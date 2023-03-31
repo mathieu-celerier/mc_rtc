@@ -122,8 +122,8 @@ void DynamicFunction::updateb()
   if (useExternalForces_)
   {
     auto & virtTorqueSensor = robot_.device<mc_rbdyn::VirtualTorqueSensor>("virtualTorqueSensor");
-    mc_rtc::log::info("[mc_tvm] external torque {}", robot_.tvmRobot().tau_e().transpose());
-    mc_rtc::log::info("[mc_tvm] virtual torque {}", virtTorqueSensor.torques().transpose());
+    // mc_rtc::log::info("[mc_tvm] external torque {}", robot_.tvmRobot().tau_e().transpose());
+    // mc_rtc::log::info("[mc_tvm] virtual torque {}", virtTorqueSensor.torques().transpose());
     b_ = robot_.tvmRobot().C() - robot_.tvmRobot().tau_e() + virtTorqueSensor.torques();
   }
   else
