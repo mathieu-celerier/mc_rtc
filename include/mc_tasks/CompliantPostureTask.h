@@ -20,6 +20,11 @@ public:
      */
     void refAccel(const Eigen::VectorXd & refAccel) noexcept;
 
+    // Set task to be compliant or not
+    void makeCompliant(bool compliance);
+    // Get compliance state of the task
+    bool isCompliant(void);
+
 protected:
     void update(mc_solver::QPSolver & solver);
 
