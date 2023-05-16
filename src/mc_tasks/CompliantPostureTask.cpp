@@ -36,6 +36,16 @@ void CompliantPostureTask::update(mc_solver::QPSolver & solver)
     PostureTask::update(solver);
 }
 
+void CompliantPostureTask::makeCompliant(bool compliance)
+{
+    isCompliant_ = compliance;
+}
+
+bool CompliantPostureTask::isCompliant(void)
+{
+    return isCompliant_;
+}
+
 void CompliantPostureTask::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
     gui.addElement({"Tasks",name_,"Compliance"},
