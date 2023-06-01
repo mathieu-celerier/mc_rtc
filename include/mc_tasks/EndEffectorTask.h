@@ -118,7 +118,10 @@ protected:
 
   void addToGUI(mc_rtc::gui::StateBuilder & gui) override;
 
-  inline const mc_rbdyn::RobotFrame & frame() const noexcept { return *positionTask->frame_; }
+  inline const mc_rbdyn::RobotFrame & frame() const noexcept
+  {
+    return *positionTask->frame_;
+  }
 };
 
 } // namespace mc_tasks

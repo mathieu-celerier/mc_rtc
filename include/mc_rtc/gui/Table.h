@@ -33,7 +33,10 @@ struct TableImpl : public Element
   {
   }
 
-  static constexpr size_t write_size() { return Element::write_size() + 2; }
+  static constexpr size_t write_size()
+  {
+    return Element::write_size() + 2;
+  }
 
   void write(mc_rtc::MessagePackBuilder & builder)
   {
@@ -66,7 +69,10 @@ struct FormattedTableImpl : public TableImpl<GetHeader, GetData>
   {
   }
 
-  static constexpr size_t write_size() { return TableImpl<GetHeader, GetData>::write_size() + 1; }
+  static constexpr size_t write_size()
+  {
+    return TableImpl<GetHeader, GetData>::write_size() + 1;
+  }
 
   void write(mc_rtc::MessagePackBuilder & builder)
   {
@@ -100,7 +106,10 @@ struct StaticTableImpl : public Element
   {
   }
 
-  static constexpr size_t write_size() { return Element::write_size() + 3; }
+  static constexpr size_t write_size()
+  {
+    return Element::write_size() + 3;
+  }
 
   void write(mc_rtc::MessagePackBuilder & builder)
   {
@@ -132,7 +141,10 @@ auto Table(const std::string & name,
            std::vector<std::string> format,
            GetData get_data_fn)
 {
-  while(format.size() < header.size()) { format.push_back("{}"); }
+  while(format.size() < header.size())
+  {
+    format.push_back("{}");
+  }
   return details::StaticTableImpl(name, std::move(header), std::move(format), get_data_fn);
 }
 

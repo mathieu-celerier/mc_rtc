@@ -47,16 +47,28 @@ MCGlobalController::MCGlobalController(const GlobalConfiguration & conf)
   {
     mc_rtc::log::info("GUI server enabled");
     mc_rtc::log::info("Will serve data on:");
-    for(const auto & pub_uri : conf.gui_server_pub_uris) { mc_rtc::log::info("- {}", pub_uri); }
+    for(const auto & pub_uri : conf.gui_server_pub_uris)
+    {
+      mc_rtc::log::info("- {}", pub_uri);
+    }
     mc_rtc::log::info("Will handle requests on:");
-    for(const auto & rep_uri : conf.gui_server_rep_uris) { mc_rtc::log::info("- {}", rep_uri); }
+    for(const auto & rep_uri : conf.gui_server_rep_uris)
+    {
+      mc_rtc::log::info("- {}", rep_uri);
+    }
   }
-  else { mc_rtc::log::info("GUI server disabled"); }
+  else
+  {
+    mc_rtc::log::info("GUI server disabled");
+  }
   {
     std::string plugin_str;
     for(const auto & p : conf.global_plugins)
     {
-      if(plugin_str.size()) { plugin_str += ", "; }
+      if(plugin_str.size())
+      {
+        plugin_str += ", ";
+      }
       plugin_str += p;
       if(std::find(conf.global_plugins_autoload.begin(), conf.global_plugins_autoload.end(), p)
          != conf.global_plugins_autoload.end())
@@ -80,7 +92,10 @@ MCGlobalController::MCGlobalController(const GlobalConfiguration & conf)
 #ifdef MC_RTC_BUILD_STATIC
   GlobalPluginLoader::loader().set_verbosity(config.verbose_loader);
 #endif
-  for(const auto & plugin : config.global_plugins) { loadPlugin(plugin, "global configuration"); }
+  for(const auto & plugin : config.global_plugins)
+  {
+    loadPlugin(plugin, "global configuration");
+  }
 
   // Loading controller modules
   config.load_controllers_configs();
@@ -153,7 +168,10 @@ std::shared_ptr<mc_rbdyn::RobotModule> MCGlobalController::get_robot_module()
 std::vector<std::string> MCGlobalController::enabled_controllers() const
 {
   std::vector<std::string> ret;
-  for(const auto & c : controllers) { ret.push_back(c.first); }
+  for(const auto & c : controllers)
+  {
+    ret.push_back(c.first);
+  }
   return ret;
 }
 
@@ -189,7 +207,10 @@ void MCGlobalController::init(const std::vector<double> & initq, const sva::PTra
   controller().robot().posW(initAttitude);
   for(auto & robot : controller().robots())
   {
-    if(robot.robotIndex() == controller().robots().robotIndex()) { continue; }
+    if(robot.robotIndex() == controller().robots().robotIndex())
+    {
+      continue;
+    }
     initEncoders(robot);
   }
   this->initController();
@@ -207,8 +228,7 @@ void MCGlobalController::init(const std::vector<double> & initq)
     // Configure initial attitude (requires FK to be computed)
     if(config.init_attitude_from_sensor)
     {
-      auto initAttitude = [this](const mc_rbdyn::BodySensor & sensor)
-      {
+      auto initAttitude = [this](const mc_rbdyn::BodySensor & sensor) {
         mc_rtc::log::info("Initializing attitude from body sensor: {}", sensor.name());
         // Update free flyer from body sensor takin into account the kinematics
         // between sensor and body
@@ -221,7 +241,10 @@ void MCGlobalController::init(const std::vector<double> & initq)
         controller().robot().posW(initPos);
         controller().realRobot().posW(initPos);
       };
-      if(config.init_attitude_sensor.empty()) { initAttitude(controller_->robot().bodySensor()); }
+      if(config.init_attitude_sensor.empty())
+      {
+        initAttitude(controller_->robot().bodySensor());
+      }
       else
       {
         if(controller_->robot().hasBodySensor(config.init_attitude_sensor))
@@ -250,7 +273,10 @@ void MCGlobalController::init(const std::vector<double> & initq)
   }
   for(auto & robot : controller().robots())
   {
-    if(robot.robotIndex() == controller().robots().robotIndex()) { continue; }
+    if(robot.robotIndex() == controller().robots().robotIndex())
+    {
+      continue;
+    }
     initEncoders(robot);
   }
   this->initController();
@@ -269,10 +295,19 @@ void MCGlobalController::init(const std::map<std::string, std::vector<double>> &
   for(auto & robot : controller().robots())
   {
     auto initq_it = initqs.find(robot.name());
-    if(initq_it != initqs.end()) { initEncoders(robot, initq_it->second); }
-    else { initEncoders(robot); }
+    if(initq_it != initqs.end())
+    {
+      initEncoders(robot, initq_it->second);
+    }
+    else
+    {
+      initEncoders(robot);
+    }
     auto initatt_it = initAttitudes.find(robot.name());
-    if(initatt_it != initAttitudes.end()) { robot.posW(initatt_it->second); }
+    if(initatt_it != initAttitudes.end())
+    {
+      robot.posW(initatt_it->second);
+    }
     else
     {
       auto & q = robot.mbc().q;
@@ -317,7 +352,10 @@ void MCGlobalController::initEncoders(mc_rbdyn::Robot & robot, const std::vector
     {
       auto jIndex = robot.jointIndexByName(jn);
       auto jDof = robot.mb().joint(static_cast<int>(jIndex)).dof();
-      if(jDof == 1) { q[jIndex][0] = initq[i]; }
+      if(jDof == 1)
+      {
+        q[jIndex][0] = initq[i];
+      }
       else if(jDof > 1)
       {
         mc_rtc::log::warning("Not using encoder values to initialize {}, please complain to mc_rtc maintainers",
@@ -325,7 +363,10 @@ void MCGlobalController::initEncoders(mc_rbdyn::Robot & robot, const std::vector
       }
     }
   }
-  for(auto & g : robot.grippers()) { g.get().reset(initq); }
+  for(auto & g : robot.grippers())
+  {
+    g.get().reset(initq);
+  }
   robot.forwardKinematics();
 }
 
@@ -333,7 +374,10 @@ void MCGlobalController::initEncoders(mc_rbdyn::Robot & robot)
 {
   // We only need to go through this to initialize the gripper, otherwise the robots are already initialized to the
   // stance configuration
-  if(robot.grippers().empty()) { return; }
+  if(robot.grippers().empty())
+  {
+    return;
+  }
   const auto & rjo = robot.refJointOrder();
   std::vector<double> rinitq;
   rinitq.reserve(rjo.size());
@@ -345,19 +389,34 @@ void MCGlobalController::initEncoders(mc_rbdyn::Robot & robot)
       const auto & q = robot.mbc().q[jIndex];
       if(q.size())
       {
-        for(const auto & qi : q) { rinitq.push_back(qi); }
+        for(const auto & qi : q)
+        {
+          rinitq.push_back(qi);
+        }
       }
-      else { rinitq.push_back(0.0); }
+      else
+      {
+        rinitq.push_back(0.0);
+      }
     }
-    else { rinitq.push_back(0.0); }
+    else
+    {
+      rinitq.push_back(0.0);
+    }
   }
-  for(auto & g : robot.grippers()) { g.get().reset(rinitq); }
+  for(auto & g : robot.grippers())
+  {
+    g.get().reset(rinitq);
+  }
 }
 
 void MCGlobalController::initController(bool reset)
 {
   mc_solver::QPSolver::context_backend(controller_->solver().backend());
-  if(config.enable_log) { start_log(); }
+  if(config.enable_log)
+  {
+    start_log();
+  }
   const auto & q = controller().robot().mbc().q;
   controller_->converters_.clear();
   controller_->converters_.reserve(controller_->robots().size());
@@ -372,11 +431,17 @@ void MCGlobalController::initController(bool reset)
   initGUI();
   if(reset)
   {
-    for(auto & plugin : plugins_) { plugin.plugin->reset(*this); }
+    for(auto & plugin : plugins_)
+    {
+      plugin.plugin->reset(*this);
+    }
   }
   else
   {
-    for(auto & plugin : plugins_) { plugin.plugin->init(*this, config.global_plugin_configs[plugin.name]); }
+    for(auto & plugin : plugins_)
+    {
+      plugin.plugin->init(*this, config.global_plugin_configs[plugin.name]);
+    }
   }
   resetControllerPlugins();
 }
@@ -704,7 +769,10 @@ void MCGlobalController::setJointMotorCurrents(const std::string & robotName,
 {
   auto & robot = controller().robot(robotName);
   auto & sensors = robot.data()->jointSensors;
-  for(const auto & c : currents) { sensors[robot.data()->jointJointSensors.at(c.first)].motorCurrent(c.second); }
+  for(const auto & c : currents)
+  {
+    sensors[robot.data()->jointJointSensors.at(c.first)].motorCurrent(c.second);
+  }
 }
 
 bool MCGlobalController::run()
@@ -745,13 +813,19 @@ bool MCGlobalController::run()
       }
       next_controller_->realRobot().mbc() = controller_->realRobot().mbc();
     }
-    if(!running) { controller_ = next_controller_; }
+    if(!running)
+    {
+      controller_ = next_controller_;
+    }
     else
     {
       // Remove observer pipelines created by MCController::createObserverPipelines
       for(auto & pipeline : controller_->observerPipelines())
       {
-        if(controller_->gui_) { pipeline.removeFromGUI(*controller_->gui()); }
+        if(controller_->gui_)
+        {
+          pipeline.removeFromGUI(*controller_->gui());
+        }
         pipeline.removeFromLogger(controller_->logger());
       }
       controller_->stop();
@@ -765,12 +839,18 @@ bool MCGlobalController::run()
       next_controller_->resetObserverPipelines();
       controller_ = next_controller_;
       /** Reset plugins */
-      for(auto & plugin : plugins_) { plugin.plugin->reset(*this); }
+      for(auto & plugin : plugins_)
+      {
+        plugin.plugin->reset(*this);
+      }
       resetControllerPlugins();
     }
     next_controller_ = nullptr;
     current_ctrl = next_ctrl;
-    if(config.enable_log) { start_log(); }
+    if(config.enable_log)
+    {
+      start_log();
+    }
     initGUI();
     mc_rtc::log::success("Controller {} activated", current_ctrl);
   }
@@ -802,7 +882,10 @@ bool MCGlobalController::run()
       const auto & gi = robot.grippers();
       if(!gi.empty())
       {
-        for(auto & g : gi) { g.get().run(controller_->timeStep, outputRobot, outputRealRobot); }
+        for(auto & g : gi)
+        {
+          g.get().run(controller_->timeStep, outputRobot, outputRealRobot);
+        }
         outputRobot.forwardKinematics();
       }
       robot.module().controlToCanonicalPostProcess(robot, outputRobot);
@@ -818,7 +901,10 @@ bool MCGlobalController::run()
     controller_run_dt = end_controller_run_t - start_controller_run_t;
     solver_build_and_solve_t = controller_->solver().solveAndBuildTime();
     solver_solve_t = controller_->solver().solveTime();
-    if(!r) { running = false; }
+    if(!r)
+    {
+      running = false;
+    }
     for(auto & plugin : plugins_after_)
     {
       auto start_t = clock::now();
@@ -834,7 +920,10 @@ bool MCGlobalController::run()
   }
   else
   {
-    for(auto & plugin : plugins_before_always_) { plugin->before(*this); }
+    for(auto & plugin : plugins_before_always_)
+    {
+      plugin->before(*this);
+    }
     controller_run_dt.zero();
     solver_build_and_solve_t = 0;
     solver_solve_t = 0;
@@ -845,7 +934,10 @@ bool MCGlobalController::run()
       server_->publish(*controller_->gui_);
       gui_dt = clock::now() - start_gui_t;
     }
-    for(auto & plugin : plugins_after_always_) { plugin->after(*this); }
+    for(auto & plugin : plugins_after_always_)
+    {
+      plugin->after(*this);
+    }
   }
   global_run_dt = clock::now() - start_run_t;
   // Percentage of time not spent inside the user code
@@ -877,7 +969,10 @@ void MCGlobalController::setGripperTargetQ(const std::string & robot,
 void MCGlobalController::setGripperOpenPercent(const std::string & robot, double pOpen)
 {
   auto & r = controller_->robots().robot(robot);
-  for(auto & g : r.grippers()) { g.get().setTargetOpening(pOpen); }
+  for(auto & g : r.grippers())
+  {
+    g.get().setTargetOpening(pOpen);
+  }
 }
 
 void MCGlobalController::setGripperOpenPercent(const std::string & robot, const std::string & name, double pOpen)
@@ -988,15 +1083,24 @@ bool MCGlobalController::EnableController(const std::string & name)
   }
   else
   {
-    if(name == current_ctrl) { mc_rtc::log::error("{} controller already enabled.", name); }
-    else { mc_rtc::log::error("{} controller not enabled.", name); }
+    if(name == current_ctrl)
+    {
+      mc_rtc::log::error("{} controller already enabled.", name);
+    }
+    else
+    {
+      mc_rtc::log::error("{} controller not enabled.", name);
+    }
     return false;
   }
 }
 
 bool MCGlobalController::GoToHalfSitPose()
 {
-  if(current_ctrl != std::string("HalfSitPose")) { return EnableController("HalfSitPose"); }
+  if(current_ctrl != std::string("HalfSitPose"))
+  {
+    return EnableController("HalfSitPose");
+  }
   return true;
 }
 
@@ -1004,7 +1108,10 @@ void MCGlobalController::start_log()
 {
   controller_->logger().start(current_ctrl, controller_->timeStep);
   setup_log();
-  if(server_) { server_->set_logger(controller_->logger_); }
+  if(server_)
+  {
+    server_->set_logger(controller_->logger_);
+  }
 }
 
 void MCGlobalController::refreshLog()
@@ -1020,8 +1127,14 @@ void MCGlobalController::setup_log()
   meta.main_robot = controller_->robot().name();
   meta.main_robot_module = controller_->robot().module().parameters();
   meta.init.clear();
-  for(const auto & r : controller_->robots()) { meta.init[r.name()] = r.posW(); }
-  if(setup_logger_.count(current_ctrl)) { return; }
+  for(const auto & r : controller_->robots())
+  {
+    meta.init[r.name()] = r.posW();
+  }
+  if(setup_logger_.count(current_ctrl))
+  {
+    return;
+  }
   // Copy controller pointer to avoid lambda issue
   MCController * controller = controller_;
   // Performance measures
@@ -1033,11 +1146,13 @@ void MCGlobalController::setup_log()
   controller->logger().addLogEntry("perf_Log", [this]() { return log_dt.count(); });
   controller->logger().addLogEntry("perf_Gui", [this]() { return gui_dt.count(); });
   controller->logger().addLogEntry("perf_FrameworkCost", [this]() { return framework_cost; });
-  auto getPluginName = [this](GlobalPlugin * plugin) -> const std::string &
-  {
+  auto getPluginName = [this](GlobalPlugin * plugin) -> const std::string & {
     for(auto & p : plugins_)
     {
-      if(p.plugin.get() == plugin) { return p.name; }
+      if(p.plugin.get() == plugin)
+      {
+        return p.name;
+      }
     }
     mc_rtc::log::error_and_throw(
         "Impossible error, searched for a plugin name from a pointer to a plugin that was not loaded");
@@ -1055,14 +1170,10 @@ void MCGlobalController::setup_log()
                                      [&plugin]() { return plugin.plugin_after_dt.count(); });
   }
   // Log system wall time as nanoseconds since epoch (can be used to manage synchronization with ros)
-  controller->logger().addLogEntry("timeWall",
-                                   []() -> int64_t
-                                   {
-                                     int64_t nanoseconds_since_epoch =
-                                         std::chrono::system_clock::now().time_since_epoch()
-                                         / std::chrono::nanoseconds(1);
-                                     return nanoseconds_since_epoch;
-                                   });
+  controller->logger().addLogEntry("timeWall", []() -> int64_t {
+    int64_t nanoseconds_since_epoch = std::chrono::system_clock::now().time_since_epoch() / std::chrono::nanoseconds(1);
+    return nanoseconds_since_epoch;
+  });
   setup_logger_[current_ctrl] = true;
 }
 
@@ -1081,12 +1192,18 @@ GlobalPlugin * MCGlobalController::loadPlugin(const std::string & name, const ch
     if(plugin_config.should_run_before)
     {
       plugins_before_.push_back({plugin, duration_ms{0}});
-      if(plugin_config.should_always_run) { plugins_before_always_.push_back(plugin); }
+      if(plugin_config.should_always_run)
+      {
+        plugins_before_always_.push_back(plugin);
+      }
     }
     if(plugin_config.should_run_after)
     {
       plugins_after_.push_back({plugin, duration_ms{0}});
-      if(plugin_config.should_always_run) { plugins_after_always_.push_back(plugin); }
+      if(plugin_config.should_always_run)
+      {
+        plugins_after_always_.push_back(plugin);
+      }
     }
     return plugin;
   }
@@ -1107,7 +1224,10 @@ void MCGlobalController::resetControllerPlugins()
   for(const auto & p : plugins_)
   {
     auto it = std::find(next_ctrl_plugins.begin(), next_ctrl_plugins.end(), p.name);
-    if(it != next_ctrl_plugins.end()) { next_ctrl_plugins.erase(it); }
+    if(it != next_ctrl_plugins.end())
+    {
+      next_ctrl_plugins.erase(it);
+    }
   }
   // Go over controller plugins that are already loaded
   for(auto it = controller_plugins_.begin(); it != controller_plugins_.end();)
@@ -1120,14 +1240,26 @@ void MCGlobalController::resetControllerPlugins()
       // First we remove the plugin from the before/always lists as needed
       auto it_before = std::find_if(plugins_before_.begin(), plugins_before_.end(),
                                     [&](const PluginBefore & p) { return p.plugin == it->plugin.get(); });
-      if(it_before != plugins_before_.end()) { plugins_before_.erase(it_before); }
+      if(it_before != plugins_before_.end())
+      {
+        plugins_before_.erase(it_before);
+      }
       auto it_before_always = std::find(plugins_before_always_.begin(), plugins_before_always_.end(), it->plugin.get());
-      if(it_before_always != plugins_before_always_.end()) { plugins_before_always_.erase(it_before_always); }
+      if(it_before_always != plugins_before_always_.end())
+      {
+        plugins_before_always_.erase(it_before_always);
+      }
       auto it_after = std::find_if(plugins_after_.begin(), plugins_after_.end(),
                                    [&](const PluginAfter & p) { return p.plugin == it->plugin.get(); });
-      if(it_after != plugins_after_.end()) { plugins_after_.erase(it_after); }
+      if(it_after != plugins_after_.end())
+      {
+        plugins_after_.erase(it_after);
+      }
       auto it_after_always = std::find(plugins_after_always_.begin(), plugins_after_always_.end(), it->plugin.get());
-      if(it_after_always != plugins_after_always_.end()) { plugins_after_always_.erase(it_after_always); }
+      if(it_after_always != plugins_after_always_.end())
+      {
+        plugins_after_always_.erase(it_after_always);
+      }
       // Finally we can remove the handle
       it = controller_plugins_.erase(it);
     }
@@ -1142,7 +1274,10 @@ void MCGlobalController::resetControllerPlugins()
   for(const auto & name : next_ctrl_plugins)
   {
     auto plugin = loadPlugin(name, next_ctrl.c_str());
-    if(plugin) { plugin->init(*this, config.global_plugin_configs[name]); }
+    if(plugin)
+    {
+      plugin->init(*this, config.global_plugin_configs[name]);
+    }
   }
 }
 

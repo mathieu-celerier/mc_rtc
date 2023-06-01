@@ -38,7 +38,10 @@ struct ForceROImpl : public Element
                   "Force element surface callback must return an sva::PTransformd");
   }
 
-  static constexpr size_t write_size() { return Element::write_size() + 3 + ForceConfig::write_size(); }
+  static constexpr size_t write_size()
+  {
+    return Element::write_size() + 3 + ForceConfig::write_size();
+  }
 
   void write(mc_rtc::MessagePackBuilder & builder, bool ro = true)
   {
@@ -70,7 +73,10 @@ struct ForceImpl : public ForceROImpl<GetForce, GetSurface>
   {
   }
 
-  void write(mc_rtc::MessagePackBuilder & builder) { ForceRO::write(builder, false); }
+  void write(mc_rtc::MessagePackBuilder & builder)
+  {
+    ForceRO::write(builder, false);
+  }
 
   bool handleRequest(const mc_rtc::Configuration & data)
   {

@@ -14,7 +14,10 @@ namespace mc_plugin
 
 struct MC_CONTROL_DLLAPI TestCanonicalRobotController : public mc_control::GlobalPlugin
 {
-  void init(mc_control::MCGlobalController & gc, const mc_rtc::Configuration &) override { reset(gc); }
+  void init(mc_control::MCGlobalController & gc, const mc_rtc::Configuration &) override
+  {
+    reset(gc);
+  }
 
   void reset(mc_control::MCGlobalController & gc) override
   {

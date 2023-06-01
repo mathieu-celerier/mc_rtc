@@ -74,7 +74,10 @@ public:
   static FramePtr make(const std::string & name, Frame & parent, sva::PTransformd X_p_f, bool baked);
 
   /** Return the frame's name */
-  inline const std::string & name() const noexcept { return name_; }
+  inline const std::string & name() const noexcept
+  {
+    return name_;
+  }
 
   /** Compute the current (6D) frame's position in inertial frame */
   virtual inline sva::PTransformd position() const noexcept
@@ -85,7 +88,10 @@ public:
   /** Compute the current frame's velocity in inertial frame */
   virtual inline sva::MotionVecd velocity() const noexcept
   {
-    if(!parent_) { return velocity_; }
+    if(!parent_)
+    {
+      return velocity_;
+    }
     auto vel = parent_->velocity();
     auto X_0_p = parent_->position();
     vel.linear() += -hat(X_0_p.rotation().transpose() * position_.translation()) * vel.angular();
@@ -117,7 +123,10 @@ public:
   }
 
   /** Access the parent's frame (might be nullptr) */
-  inline const FramePtr & parent() const noexcept { return parent_; }
+  inline const FramePtr & parent() const noexcept
+  {
+    return parent_;
+  }
 
   /** Access the associated TVM frame
    *
@@ -125,7 +134,10 @@ public:
    */
   inline mc_tvm::Frame & tvm_frame() const
   {
-    if(!tvm_frame_) { init_tvm_frame(); }
+    if(!tvm_frame_)
+    {
+      init_tvm_frame();
+    }
     return *tvm_frame_;
   }
 

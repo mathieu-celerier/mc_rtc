@@ -49,7 +49,10 @@ struct AbscissaOrdinate
     cache_.resize(0);
   }
 
-  void update() const { cache_.push_back({get_x_fn_(), get_y_fn_()}); }
+  void update() const
+  {
+    cache_.push_back({get_x_fn_(), get_y_fn_()});
+  }
 
   AbscissaOrdinate & style(Style style)
   {

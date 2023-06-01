@@ -136,10 +136,16 @@ public:
   void setup(const Policy & policy, const std::string & directory, const std::string & tmpl);
 
   /*! \brief Access the log's metadata */
-  inline Meta & meta() noexcept { return meta_; }
+  inline Meta & meta() noexcept
+  {
+    return meta_;
+  }
 
   /*! \brief Access the log's metadata (const) */
-  inline const Meta & meta() const noexcept { return meta_; }
+  inline const Meta & meta() const noexcept
+  {
+    return meta_;
+  }
 
   /*! \brief Start logging
    *
@@ -304,7 +310,10 @@ public:
    *
    * \param event Event being added to the log
    */
-  inline void addGUIEvent(GUIEvent && event) { log_events_.push_back(std::move(event)); }
+  inline void addGUIEvent(GUIEvent && event)
+  {
+    log_events_.push_back(std::move(event));
+  }
 
   /** Remove a log entry from the log
    *
@@ -337,7 +346,10 @@ public:
   void flush();
 
   /** Returns the number of entries currently in the log */
-  inline size_t size() const { return log_entries_.size(); }
+  inline size_t size() const
+  {
+    return log_entries_.size();
+  }
 
 private:
   /** Hold information about a log entry stored in this instance */
@@ -372,14 +384,16 @@ private:
 
 /** Helper to log members or methods with "this" source to the logger variable */
 #define MC_RTC_LOG_HELPER(NAME, MEMBER)                                       \
-  do {                                                                        \
+  do                                                                          \
+  {                                                                           \
     using ThisT = typename std::remove_pointer<decltype(this)>::type;         \
     logger.addLogEntry<decltype(&ThisT::MEMBER), &ThisT::MEMBER>(NAME, this); \
   } while(0)
 
 /** Helper to log ambiguous getter methods */
 #define MC_RTC_LOG_GETTER(NAME, METHOD)                                          \
-  do {                                                                           \
+  do                                                                             \
+  {                                                                              \
     using MethodRetT = decltype(this->METHOD());                                 \
     logger.addLogEntry(NAME, this, [this]() -> MethodRetT { return METHOD(); }); \
   } while(0)

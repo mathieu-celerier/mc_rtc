@@ -76,10 +76,16 @@ struct MC_CONTROL_FSM_DLLAPI Controller : public MCController
    * This function is virtual to allow derived implementation to handle
    * interruptions differently.
    */
-  virtual void interrupt() { executor_.interrupt(); }
+  virtual void interrupt()
+  {
+    executor_.interrupt();
+  }
 
   /** Check if current state is running */
-  bool running() { return executor_.running(); }
+  bool running()
+  {
+    return executor_.running();
+  }
 
   /** Resume the FSM execution on a new state
    *
@@ -101,15 +107,24 @@ struct MC_CONTROL_FSM_DLLAPI Controller : public MCController
   std::shared_ptr<mc_tasks::PostureTask> getPostureTask(const std::string & robot);
 
   /** Access contact constraint */
-  mc_solver::ContactConstraint & contactConstraint() { return *contact_constraint_; }
+  mc_solver::ContactConstraint & contactConstraint()
+  {
+    return *contact_constraint_;
+  }
 
   /** Access the state factory */
 #ifndef MC_RTC_BUILD_STATIC
-  StateFactory & factory() { return factory_; }
+  StateFactory & factory()
+  {
+    return factory_;
+  }
 #else
   static StateFactory & factory()
   {
-    if(!factory_ptr_) { factory_ptr_.reset(new StateFactory({}, {}, false)); }
+    if(!factory_ptr_)
+    {
+      factory_ptr_.reset(new StateFactory({}, {}, false));
+    }
     return *factory_ptr_;
   }
 #endif
@@ -168,9 +183,15 @@ struct BackendSpecificController : public Controller
   {
   }
 
-  const SolverT & solver() const noexcept { return SolverT::from_solver(MCController::solver()); }
+  const SolverT & solver() const noexcept
+  {
+    return SolverT::from_solver(MCController::solver());
+  }
 
-  SolverT & solver() noexcept { return SolverT::from_solver(MCController::solver()); }
+  SolverT & solver() noexcept
+  {
+    return SolverT::from_solver(MCController::solver());
+  }
 };
 
 } // namespace details

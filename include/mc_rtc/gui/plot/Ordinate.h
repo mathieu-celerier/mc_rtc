@@ -47,7 +47,10 @@ struct Ordinate
     cache_.resize(0);
   }
 
-  void update() const { cache_.push_back(get_fn_()); }
+  void update() const
+  {
+    cache_.push_back(get_fn_());
+  }
 
   Ordinate & style(Style style)
   {

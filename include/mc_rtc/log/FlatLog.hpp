@@ -8,7 +8,10 @@
 
 #include "FlatLog.h"
 
-namespace mc_rtc::log
+namespace mc_rtc
+{
+
+namespace log
 {
 
 namespace details
@@ -17,53 +20,37 @@ namespace details
 template<typename T>
 struct CheckLogType
 {
-  static bool check(const LogType & t) { return t == mc_rtc::log::GetLogType<T>::type; }
-};
-
-template<typename T>
-struct CastLogRecord
-{
-  static const T * cast(const FlatLog::record & r) { return static_cast<const T *>(r.data.get()); }
-};
-
-template<int N, int _Options, int _MaxRows, int _MaxCols>
-struct CastLogRecord<Eigen::Matrix<double, N, 1, _Options, _MaxRows, _MaxCols>>
-{
-  static const FlatLog::get_raw_return_t<Eigen::Matrix<double, N, 1, _Options, _MaxRows, _MaxCols>> * cast(
-      const FlatLog::record & r)
+  static bool check(const LogType & t)
   {
-    if constexpr(N == -1 || N == 2 || N == 3 || N == 6)
-    {
-      return static_cast<const Eigen::Matrix<double, N, 1, _Options, _MaxRows, _MaxCols> *>(r.data.get());
-    }
-    else
-    {
-      auto v = static_cast<const Eigen::VectorXd *>(r.data.get());
-      if(v->size() == N) { return v; }
-      else { return nullptr; }
-    }
+    return t == mc_rtc::log::GetLogType<T>::type;
   }
 };
 
 template<typename T>
-const FlatLog::get_raw_return_t<T> * record_cast(const FlatLog::record & r)
+const T * record_cast(const FlatLog::record & r)
 {
-  if(CheckLogType<T>::check(r.type)) { return CastLogRecord<T>::cast(r); }
+  if(CheckLogType<T>::check(r.type))
+  {
+    return static_cast<const T *>(r.data.get());
+  }
   return nullptr;
 }
 
 template<typename T>
 bool convert(const FlatLog::record & r, T & out)
 {
-  auto ptr = record_cast<T>(r);
-  if(ptr) { out = *ptr; }
+  const T * ptr = record_cast<T>(r);
+  if(ptr)
+  {
+    out = *ptr;
+  }
   return ptr;
 }
 
 } // namespace details
 
 template<typename T>
-auto FlatLog::getRaw(const std::string & entry) const -> std::vector<const get_raw_return_t<T> *>
+std::vector<const T *> FlatLog::getRaw(const std::string & entry) const
 {
   if(!has(entry))
   {
@@ -73,12 +60,15 @@ auto FlatLog::getRaw(const std::string & entry) const -> std::vector<const get_r
   std::vector<const T *> ret;
   const auto & data = at(entry);
   ret.reserve(data.size());
-  for(const auto & r : data) { ret.push_back(details::record_cast<T>(r)); }
+  for(const auto & r : data)
+  {
+    ret.push_back(details::record_cast<T>(r));
+  }
   return ret;
 }
 
 template<typename T>
-auto FlatLog::get(const std::string & entry, const T & def) const -> std::vector<get_raw_return_t<T>>
+std::vector<T> FlatLog::get(const std::string & entry, const T & def) const
 {
   if(!has(entry))
   {
@@ -87,7 +77,10 @@ auto FlatLog::get(const std::string & entry, const T & def) const -> std::vector
   }
   const auto & data = at(entry);
   std::vector<T> ret(data.size(), def);
-  for(size_t i = 0; i < data.size(); ++i) { details::convert<T>(data[i], ret[i]); }
+  for(size_t i = 0; i < data.size(); ++i)
+  {
+    details::convert<T>(data[i], ret[i]);
+  }
   return ret;
 }
 
@@ -104,13 +97,16 @@ inline std::vector<bool> FlatLog::get(const std::string & entry, const bool & de
   for(size_t i = 0; i < data.size(); ++i)
   {
     const bool * ptr = details::record_cast<bool>(data[i]);
-    if(ptr) { ret[i] = *ptr; }
+    if(ptr)
+    {
+      ret[i] = *ptr;
+    }
   }
   return ret;
 }
 
 template<typename T>
-auto FlatLog::get(const std::string & entry) const -> std::vector<get_raw_return_t<T>>
+std::vector<T> FlatLog::get(const std::string & entry) const
 {
   if(!has(entry))
   {
@@ -124,7 +120,10 @@ auto FlatLog::get(const std::string & entry) const -> std::vector<get_raw_return
   while(start_i < data.size())
   {
     const auto & r = data[start_i];
-    if(details::convert<T>(r, def)) { break; }
+    if(details::convert<T>(r, def))
+    {
+      break;
+    }
     start_i++;
   }
   if(start_i == data.size())
@@ -143,15 +142,18 @@ auto FlatLog::get(const std::string & entry) const -> std::vector<get_raw_return
 }
 
 template<typename T>
-auto FlatLog::get(const std::string & entry, size_t i, const T & def) const -> get_raw_return_t<T>
+T FlatLog::get(const std::string & entry, size_t i, const T & def) const
 {
   const T * data = getRaw<T>(entry, i);
-  if(data) { return *data; }
+  if(data)
+  {
+    return *data;
+  }
   return def;
 }
 
 template<typename T>
-auto FlatLog::getRaw(const std::string & entry, size_t i) const -> const get_raw_return_t<T> *
+const T * FlatLog::getRaw(const std::string & entry, size_t i) const
 {
   if(!has(entry))
   {
@@ -167,4 +169,6 @@ auto FlatLog::getRaw(const std::string & entry, size_t i) const -> const get_raw
   return details::record_cast<T>(data[i]);
 }
 
-} // namespace mc_rtc::log
+} // namespace log
+
+} // namespace mc_rtc

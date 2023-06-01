@@ -46,7 +46,10 @@ struct MC_CONTROL_DLLAPI GlobalPlugin
    * This impacts which functions are called and when they are called
    *
    */
-  virtual GlobalPluginConfiguration configuration() { return {}; }
+  virtual GlobalPluginConfiguration configuration()
+  {
+    return {};
+  }
 
   /** Initialize the plugin
    *

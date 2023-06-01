@@ -59,7 +59,10 @@ inline double clampAndWarn(double value, double lower, double upper, const std::
     mc_rtc::log::warning("{} clamped to {}", label, lower);
     return lower;
   }
-  else { return value; }
+  else
+  {
+    return value;
+  }
 }
 
 /** Clamp value in-place in a given interval, issuing a warning when bounds are hit.
@@ -89,7 +92,10 @@ template<typename VectorT>
 inline VectorT clamp(const VectorT & v, double lower, double upper)
 {
   VectorT result(v.size());
-  for(unsigned i = 0; i < v.size(); i++) { result(i) = clamp(v(i), lower, upper); }
+  for(unsigned i = 0; i < v.size(); i++)
+  {
+    result(i) = clamp(v(i), lower, upper);
+  }
   return result;
 }
 
@@ -103,7 +109,10 @@ template<typename VectorT>
 inline VectorT clamp(const VectorT & v, const VectorT & lower, const VectorT & upper)
 {
   VectorT result(v.size());
-  for(unsigned i = 0; i < v.size(); i++) { result(i) = clamp(v(i), lower(i), upper(i)); }
+  for(unsigned i = 0; i < v.size(); i++)
+  {
+    result(i) = clamp(v(i), lower(i), upper(i));
+  }
   return result;
 }
 
@@ -132,7 +141,10 @@ inline VectorT clampAndWarn(const VectorT & v, const VectorT & lower, const Vect
 template<typename VectorT>
 inline void clampInPlace(VectorT & v, const VectorT & lower, const VectorT & upper)
 {
-  for(unsigned i = 0; i < v.size(); i++) { v(i) = clamp(v(i), lower(i), upper(i)); }
+  for(unsigned i = 0; i < v.size(); i++)
+  {
+    v(i) = clamp(v(i), lower(i), upper(i));
+  }
 }
 
 /**
@@ -143,7 +155,10 @@ inline void clampInPlace(VectorT & v, const VectorT & lower, const VectorT & upp
 template<typename VectorT>
 inline void clampInPlace(VectorT & v, double lower, double upper)
 {
-  for(unsigned i = 0; i < v.size(); i++) { v(i) = clamp(v(i), lower, upper); }
+  for(unsigned i = 0; i < v.size(); i++)
+  {
+    v(i) = clamp(v(i), lower, upper);
+  }
 }
 
 /**

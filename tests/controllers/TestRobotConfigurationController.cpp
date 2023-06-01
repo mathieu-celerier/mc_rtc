@@ -39,7 +39,10 @@ public:
     mc_rtc::log::success("Created TestRobotConfigurationControllerController");
   }
 
-  virtual bool run() override { return MCController::run(); }
+  virtual bool run() override
+  {
+    return MCController::run();
+  }
 
   virtual void reset(const ControllerResetData & reset_data) override
   {

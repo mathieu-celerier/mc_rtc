@@ -83,9 +83,18 @@ BOOST_AUTO_TEST_CASE(TestDataStoreInheritance)
   {
     A(const std::string & name) : name_(name) {}
     virtual ~A() = default;
-    virtual std::string hello() const { return "A::Hello " + name_; }
-    void printHello() const { std::cout << hello() << std::endl; }
-    std::string type() const { return "A"; }
+    virtual std::string hello() const
+    {
+      return "A::Hello " + name_;
+    }
+    void printHello() const
+    {
+      std::cout << hello() << std::endl;
+    }
+    std::string type() const
+    {
+      return "A";
+    }
     std::string name_;
   };
 
@@ -93,8 +102,14 @@ BOOST_AUTO_TEST_CASE(TestDataStoreInheritance)
   {
     B(const std::string & name) : A(name) {}
     ~B() override = default;
-    std::string hello() const override { return "B::Hello " + name_; }
-    std::string type() const { return "B"; }
+    std::string hello() const override
+    {
+      return "B::Hello " + name_;
+    }
+    std::string type() const
+    {
+      return "B";
+    }
   };
 
   DataStore store;
@@ -142,7 +157,10 @@ BOOST_AUTO_TEST_CASE(Lambda)
   struct A
   {
     double val;
-    double compute(double t) { return val * t; }
+    double compute(double t)
+    {
+      return val * t;
+    }
   };
   A a;
   a.val = 42;
@@ -166,19 +184,23 @@ BOOST_AUTO_TEST_CASE(Lambda)
   {
     FootstepPlan(DataStore & store) : store_(store)
     {
-      store.make<std::function<std::vector<double>()>>("compute_footstep",
-                                                       [this]()
-                                                       {
-                                                         recompute();
-                                                         return plan_;
-                                                       });
+      store.make<std::function<std::vector<double>()>>("compute_footstep", [this]() {
+        recompute();
+        return plan_;
+      });
     }
 
-    ~FootstepPlan() { store_.remove("compute_footstep"); }
+    ~FootstepPlan()
+    {
+      store_.remove("compute_footstep");
+    }
 
     // In practice this would do actual computations, just add a dummy number to
     // the footstep vector for this test
-    void recompute() { plan_.push_back(plan_.back() + 1); }
+    void recompute()
+    {
+      plan_.push_back(plan_.back() + 1);
+    }
 
     std::vector<double> plan_{1, 2, 3};
     DataStore & store_;
@@ -202,7 +224,10 @@ BOOST_AUTO_TEST_CASE(LambdaSugar)
   struct A
   {
     double val;
-    double compute(double t) { return val * t; }
+    double compute(double t)
+    {
+      return val * t;
+    }
   };
   A a;
   a.val = 42;
@@ -229,19 +254,23 @@ BOOST_AUTO_TEST_CASE(LambdaSugar)
   {
     FootstepPlan(DataStore & store) : store_(store)
     {
-      store.make_call("compute_footstep",
-                      [this]()
-                      {
-                        recompute();
-                        return plan_;
-                      });
+      store.make_call("compute_footstep", [this]() {
+        recompute();
+        return plan_;
+      });
     }
 
-    ~FootstepPlan() { store_.remove("compute_footstep"); }
+    ~FootstepPlan()
+    {
+      store_.remove("compute_footstep");
+    }
 
     // In practice this would do actual computations, just add a dummy number to
     // the footstep vector for this test
-    void recompute() { plan_.push_back(plan_.back() + 1); }
+    void recompute()
+    {
+      plan_.push_back(plan_.back() + 1);
+    }
 
     std::vector<size_t> plan_{1, 2, 3};
     DataStore & store_;
@@ -275,12 +304,13 @@ BOOST_AUTO_TEST_CASE(LambdaSugar)
   store.call("append", s);
   BOOST_CHECK(s == "abc###");
 
-  store.make_call("conversion",
-                  [](const std::string & in, std::string & out, size_t nRepeats)
-                  {
-                    out = "";
-                    for(size_t i = 0; i < nRepeats; ++i) { out.append(in); }
-                  });
+  store.make_call("conversion", [](const std::string & in, std::string & out, size_t nRepeats) {
+    out = "";
+    for(size_t i = 0; i < nRepeats; ++i)
+    {
+      out.append(in);
+    }
+  });
   std::string out;
   store.call<void, const std::string &, std::string &, size_t>("conversion", "abc#", out, size_t{3});
   BOOST_CHECK(out == "abc#abc#abc#");
@@ -305,9 +335,15 @@ BOOST_AUTO_TEST_CASE(TestRemove)
 {
   struct Object
   {
-    Object(const std::string & name) : name_(name) { mc_rtc::log::success("Object {} constructed", name_); }
+    Object(const std::string & name) : name_(name)
+    {
+      mc_rtc::log::success("Object {} constructed", name_);
+    }
 
-    ~Object() { mc_rtc::log::success("Object {} destructed", name_); }
+    ~Object()
+    {
+      mc_rtc::log::success("Object {} destructed", name_);
+    }
     std::string name_;
   };
 
@@ -332,7 +368,10 @@ BOOST_AUTO_TEST_CASE(PointerSharing)
       store.make<State *>("APtr", this); // Do not do this, dangerous (see below)
       store.make<std::function<State &(void)>>("ARef", [this]() -> State & { return *this; }); // This is ok
     }
-    ~State() { v = 0; }
+    ~State()
+    {
+      v = 0;
+    }
     double v = 42;
   };
   State state(store);

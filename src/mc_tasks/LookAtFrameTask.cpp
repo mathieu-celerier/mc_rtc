@@ -46,7 +46,10 @@ void LookAtFrameTask::update(mc_solver::QPSolver &)
 void LookAtFrameTask::load(mc_solver::QPSolver & solver, const mc_rtc::Configuration & config)
 {
   LookAtTask::load(solver, config);
-  if(config.has("offset")) { offset_ = config("offset"); }
+  if(config.has("offset"))
+  {
+    offset_ = config("offset");
+  }
 }
 
 } // namespace mc_tasks
@@ -59,8 +62,7 @@ std::shared_ptr<mc_tasks::LookAtFrameTask> load_look_at_frame(mc_solver::QPSolve
 {
   Eigen::Vector3d frameVector = Eigen::Vector3d::Zero();
   const auto & robot = robotFromConfig(config, solver.robots(), "lookAtFrame");
-  const auto & frame = [&]() -> const mc_rbdyn::RobotFrame &
-  {
+  const auto & frame = [&]() -> const mc_rbdyn::RobotFrame & {
     if(config.has("body"))
     {
       mc_rtc::log::deprecated("LookAtFrameTaskLoader", "body", "frame");
@@ -70,8 +72,7 @@ std::shared_ptr<mc_tasks::LookAtFrameTask> load_look_at_frame(mc_solver::QPSolve
     frameVector = config("frameVector");
     return robot.frame(config("frame"));
   }();
-  const auto & target = [&]() -> const mc_rbdyn::RobotFrame &
-  {
+  const auto & target = [&]() -> const mc_rbdyn::RobotFrame & {
     if(config.has("surface"))
     {
       mc_rtc::log::deprecated("LookAtFrameTaskLoader", "surface", "target");

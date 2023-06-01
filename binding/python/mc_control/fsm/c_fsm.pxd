@@ -48,4 +48,3 @@ cdef extern from "<mc_control/fsm/PythonState.h>" namespace "mc_control::fsm":
     controller_cb start_
     controller_cb teardown_
     controller_cb stop_
-    void output(string)

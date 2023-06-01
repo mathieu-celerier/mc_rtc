@@ -156,3 +156,4 @@ ObserverPipelines:
     - type: BodySensor
       config:
         method: control
+

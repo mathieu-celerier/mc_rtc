@@ -77,7 +77,10 @@
           const double & dt,                                                         \
           [[maybe_unused]] const mc_control::Configuration & config)                 \
       {                                                                              \
-        if(name == NAME0) { return new NEWCTL0; }                                    \
+        if(name == NAME0)                                                            \
+        {                                                                            \
+          return new NEWCTL0;                                                        \
+        }                                                                            \
         return new NEWCTL1;                                                          \
       }                                                                              \
     }
@@ -115,8 +118,7 @@
 #  define CONTROLLER_CONSTRUCTOR(NAME, TYPE)                                                             \
     namespace                                                                                            \
     {                                                                                                    \
-    static auto registered = []()                                                                        \
-    {                                                                                                    \
+    static auto registered = []() {                                                                      \
       using fn_t = std::function<TYPE *(const std::shared_ptr<mc_rbdyn::RobotModule> &, const double &,  \
                                         const mc_control::Configuration &)>;                             \
       mc_control::ControllerLoader::loader().register_object(                                            \
@@ -129,8 +131,7 @@
 #  define MULTI_CONTROLLERS_CONSTRUCTOR(NAME0, NEWCTL0, NAME1, NEWCTL1)                                   \
     namespace                                                                                             \
     {                                                                                                     \
-    static auto registered = []()                                                                         \
-    {                                                                                                     \
+    static auto registered = []() {                                                                       \
       using TYPE0 = decltype(NEWCTL0);                                                                    \
       using TYPE1 = decltype(NEWCTL1);                                                                    \
       using fn0_t = std::function<TYPE0 *(const std::shared_ptr<mc_rbdyn::RobotModule> &, const double &, \
@@ -150,8 +151,7 @@
 #  define SIMPLE_CONTROLLER_CONSTRUCTOR(NAME, TYPE)                                                     \
     namespace                                                                                           \
     {                                                                                                   \
-    static auto registered = []()                                                                       \
-    {                                                                                                   \
+    static auto registered = []() {                                                                     \
       using fn_t = std::function<TYPE *(const std::shared_ptr<mc_rbdyn::RobotModule> &, const double &, \
                                         const mc_control::Configuration &)>;                            \
       mc_control::ControllerLoader::loader().register_object(                                           \

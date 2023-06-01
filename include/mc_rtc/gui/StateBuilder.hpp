@@ -58,7 +58,10 @@ void StateBuilder::addElementImpl(void * source,
     return;
   }
   cat.elements.emplace_back(element, cat, stacking, source);
-  if(rem == 0) { cat.id += 1; }
+  if(rem == 0)
+  {
+    cat.id += 1;
+  }
 }
 
 template<typename T, typename... Args>
@@ -104,8 +107,7 @@ StateBuilder::ElementStore::ElementStore(T self, const Category & category, Elem
   element = [self]() mutable -> Element & { return self; };
   if(stacking == ElementsStacking::Vertical)
   {
-    write = [](Element & el, mc_rtc::MessagePackBuilder & builder)
-    {
+    write = [](Element & el, mc_rtc::MessagePackBuilder & builder) {
       builder.start_array(T::write_size());
       builder.write(el.name());
       builder.write(static_cast<typename std::underlying_type<Elements>::type>(T::type));
@@ -116,8 +118,7 @@ StateBuilder::ElementStore::ElementStore(T self, const Category & category, Elem
   }
   else
   {
-    write = [](Element & el, mc_rtc::MessagePackBuilder & builder)
-    {
+    write = [](Element & el, mc_rtc::MessagePackBuilder & builder) {
       builder.start_array(T::write_size());
       builder.write(el.name());
       builder.write(static_cast<typename std::underlying_type<Elements>::type>(T::type));
@@ -126,8 +127,7 @@ StateBuilder::ElementStore::ElementStore(T self, const Category & category, Elem
       builder.finish_array();
     };
   }
-  handleRequest = [](Element & el, const mc_rtc::Configuration & data)
-  {
+  handleRequest = [](Element & el, const mc_rtc::Configuration & data) {
     T & el_ = static_cast<T &>(el);
     return el_.handleRequest(data);
   };
@@ -173,9 +173,11 @@ void StateBuilder::addXYPlot(const std::string & name,
   uint64_t sz = 6;
   uint64_t id = ++plot_id_;
   plot_callback_function_t cb = [id, sz, xConfig, yLeftConfig, yRightConfig](mc_rtc::MessagePackBuilder & builder,
-                                                                             const std::string & name, bool update)
-  {
-    if(update) { return; }
+                                                                             const std::string & name, bool update) {
+    if(update)
+    {
+      return;
+    }
     builder.write(static_cast<uint64_t>(plot::Plot::XY));
     builder.write(id);
     builder.write(name);
@@ -218,8 +220,7 @@ void StateBuilder::addPlot(const std::string & name,
   uint64_t sz = 6;
   uint64_t id = ++plot_id_;
   plot_callback_function_t cb = [abscissa, id, sz, yLeftConfig, yRightConfig](mc_rtc::MessagePackBuilder & builder,
-                                                                              const std::string & name, bool update)
-  {
+                                                                              const std::string & name, bool update) {
     if(update)
     {
       abscissa.update();
@@ -242,11 +243,14 @@ void StateBuilder::addPlotData(PlotCallback & callback, T plot, Args... args)
 {
   callback.msg_size += 1;
   auto prev_callback = callback.callback;
-  callback.callback = [prev_callback, plot](mc_rtc::MessagePackBuilder & builder, const std::string & name, bool update)
-  {
+  callback.callback = [prev_callback, plot](mc_rtc::MessagePackBuilder & builder, const std::string & name,
+                                            bool update) {
     prev_callback(builder, name, update);
     plot.update();
-    if(update) { return; }
+    if(update)
+    {
+      return;
+    }
     plot.write(builder);
   };
   addPlotData(callback, args...);

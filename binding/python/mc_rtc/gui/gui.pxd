@@ -12,3 +12,4 @@ cdef class StateBuilder(object):
   cdef c_gui.shared_ptr[c_gui.StateBuilder] impl
 
 cdef StateBuilder StateBuilderFromShPtr(c_gui.shared_ptr[c_gui.StateBuilder])
+

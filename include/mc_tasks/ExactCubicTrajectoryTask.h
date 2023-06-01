@@ -93,12 +93,18 @@ struct MC_TASKS_DLLAPI ExactCubicTrajectoryTask : public SplineTrajectoryTask<Ex
    *
    * \returns The spline
    */
-  const mc_trajectory::ExactCubic & spline() const { return bspline; };
+  const mc_trajectory::ExactCubic & spline() const
+  {
+    return bspline;
+  };
   /*! \brief accessor to the underlying spline (used by SplineTrajectoryTask)
    *
    * \returns The spline
    */
-  mc_trajectory::ExactCubic & spline() { return bspline; };
+  mc_trajectory::ExactCubic & spline()
+  {
+    return bspline;
+  };
 
   /*! \brief Add interactive GUI elements to control the curve waypoints
    */

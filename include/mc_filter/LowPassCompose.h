@@ -29,7 +29,10 @@ struct LowPassCompose
   }
 
   /** Get cutoff period of the high pass filter. */
-  double cutoffPeriod() const { return cutoffPeriod_; }
+  double cutoffPeriod() const
+  {
+    return cutoffPeriod_;
+  }
 
   /** Set cutoff period.
    *
@@ -91,15 +94,27 @@ struct LowPassCompose
   /** Get filtered velocity.
    *
    */
-  const T & eval() const { return eval_; }
+  const T & eval() const
+  {
+    return eval_;
+  }
 
-  const T & input_lp() const { return value_lp_; }
-  const T & input_hp() const { return value_hp_; }
+  const T & input_lp() const
+  {
+    return value_lp_;
+  }
+  const T & input_hp() const
+  {
+    return value_hp_;
+  }
 
   /** Get sampling period.
    *
    */
-  double dt() const { return dt_; }
+  double dt() const
+  {
+    return dt_;
+  }
 
   /** Set sampling period.
    *

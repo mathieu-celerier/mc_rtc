@@ -91,7 +91,10 @@ public:
    */
 
   /** Return the first BodySensor in the robot (const) */
-  inline const BodySensor & bodySensor() const noexcept { return data_->bodySensors[0]; }
+  inline const BodySensor & bodySensor() const noexcept
+  {
+    return data_->bodySensors[0];
+  }
 
   /** Return true if the robot has a body sensor named name
    *
@@ -132,7 +135,10 @@ public:
   const BodySensor & bodyBodySensor(const std::string & name) const;
 
   /** Return all body sensors (const) */
-  inline const BodySensorVector & bodySensors() const noexcept { return data_->bodySensors; }
+  inline const BodySensorVector & bodySensors() const noexcept
+  {
+    return data_->bodySensors;
+  }
 
   /** @} */
   /* End of Body sensors group */
@@ -157,7 +163,10 @@ public:
   const JointSensor & jointJointSensor(const std::string & joint) const;
 
   /** Return all joint sensors (const) */
-  inline const std::vector<JointSensor> & jointSensors() const noexcept { return data_->jointSensors; }
+  inline const std::vector<JointSensor> & jointSensors() const noexcept
+  {
+    return data_->jointSensors;
+  }
 
   /** @} */
   /* End of Joint sensors group */
@@ -169,7 +178,10 @@ public:
   bool hasBody(const std::string & name) const;
 
   /** Returns true if the robot has a frame named \p name */
-  inline bool hasFrame(const std::string & name) const noexcept { return frames_.count(name) != 0; }
+  inline bool hasFrame(const std::string & name) const noexcept
+  {
+    return frames_.count(name) != 0;
+  }
 
   /** Access the frame named \p name
    *
@@ -178,7 +190,10 @@ public:
   inline const RobotFrame & frame(const std::string & name) const
   {
     auto it = frames_.find(name);
-    if(it != frames_.end()) { return *it->second; }
+    if(it != frames_.end())
+    {
+      return *it->second;
+    }
     mc_rtc::log::error_and_throw("No frame named {} in {}", name, name_);
   }
 
@@ -292,7 +307,10 @@ public:
   /** Equivalent to robot.mbc().jointTorque (const) */
   const std::vector<std::vector<double>> & jointTorque() const;
   /** Access the desired control torque */
-  inline const std::vector<std::vector<double>> & controlTorque() const noexcept { return jointTorque(); }
+  inline const std::vector<std::vector<double>> & controlTorque() const noexcept
+  {
+    return jointTorque();
+  }
   /** Equivalent to robot.mbc().bodyPosW (const) */
   const std::vector<sva::PTransformd> & bodyPosW() const;
   /** Equivalent to robot.mbc().bodyVelW (const) */
@@ -310,7 +328,10 @@ public:
   /** Equivalent to robot.mbc().jointTorque */
   std::vector<std::vector<double>> & jointTorque();
   /** Access the desired control torque */
-  inline std::vector<std::vector<double>> & controlTorque() noexcept { return jointTorque(); }
+  inline std::vector<std::vector<double>> & controlTorque() noexcept
+  {
+    return jointTorque();
+  }
   /** Equivalent to robot.mbc().bodyPosW */
   std::vector<sva::PTransformd> & bodyPosW();
   /** Equivalent to robot.mbc().bodyVelW */
@@ -626,7 +647,10 @@ public:
   const Eigen::Vector3d & zmpTarget() const;
 
   /** Compute and returns the mass of the robot */
-  inline double mass() const noexcept { return mass_; }
+  inline double mass() const noexcept
+  {
+    return mass_;
+  }
 
   /** @name Joint sensors
    *
@@ -636,16 +660,28 @@ public:
    */
 
   /** Return the encoder values */
-  inline const std::vector<double> & encoderValues() const noexcept { return data_->encoderValues; }
+  inline const std::vector<double> & encoderValues() const noexcept
+  {
+    return data_->encoderValues;
+  }
 
   /** Return the encoder velocities */
-  inline const std::vector<double> & encoderVelocities() const noexcept { return data_->encoderVelocities; }
+  inline const std::vector<double> & encoderVelocities() const noexcept
+  {
+    return data_->encoderVelocities;
+  }
 
   /** Return the joint torques from sensors */
-  inline const std::vector<double> & jointTorques() const noexcept { return data_->jointTorques; }
+  inline const std::vector<double> & jointTorques() const noexcept
+  {
+    return data_->jointTorques;
+  }
 
   /** Return the reference joint order for this robot */
-  inline const std::vector<std::string> & refJointOrder() const { return data_->refJointOrder; }
+  inline const std::vector<std::string> & refJointOrder() const
+  {
+    return data_->refJointOrder;
+  }
 
   /** @} */
   /* End Joints sensors section */
@@ -678,7 +714,10 @@ public:
    * @returns True if the body has a force sensor attached to it, false
    * otherwise
    */
-  inline bool bodyHasForceSensor(const std::string & body) const noexcept { return bodyForceSensors_.count(body) != 0; }
+  inline bool bodyHasForceSensor(const std::string & body) const noexcept
+  {
+    return bodyForceSensors_.count(body) != 0;
+  }
 
   /**
    * @brief Checks if the surface has a force sensor directly attached to it
@@ -795,7 +834,10 @@ public:
   const ForceSensor & indirectSurfaceForceSensor(const std::string & surface) const;
 
   /** Returns all force sensors (const) */
-  inline const std::vector<ForceSensor> & forceSensors() const noexcept { return data_->forceSensors; }
+  inline const std::vector<ForceSensor> & forceSensors() const noexcept
+  {
+    return data_->forceSensors;
+  }
 
   /** @} */
   /* End of Force sensors group */
@@ -846,7 +888,10 @@ public:
   }
 
   /** Get all devices attached to a robot */
-  inline const DevicePtrVector & devices() const noexcept { return data_->devices; }
+  inline const DevicePtrVector & devices() const noexcept
+  {
+    return data_->devices;
+  }
 
   /** Alias for \see device */
   template<typename T>
@@ -866,7 +911,10 @@ public:
   void addDevice(DevicePtr device);
 
   /** Alias for \see addDevice */
-  inline void addSensor(SensorPtr sensor) { addDevice(std::move(sensor)); }
+  inline void addSensor(SensorPtr sensor)
+  {
+    addDevice(std::move(sensor));
+  }
 
   /** @} */
   /* End of Devices group */
@@ -976,10 +1024,16 @@ public:
   std::map<std::string, std::vector<double>> stance() const;
 
   /** Access Robots instance this instance belongs to */
-  inline mc_rbdyn::Robots & robots() noexcept { return *robots_; }
+  inline mc_rbdyn::Robots & robots() noexcept
+  {
+    return *robots_;
+  }
 
   /** Access Robots instance this instance belongs to (const) */
-  inline const mc_rbdyn::Robots & robots() const noexcept { return *robots_; }
+  inline const mc_rbdyn::Robots & robots() const noexcept
+  {
+    return *robots_;
+  }
 
   /** Access the robot's index in robots() */
   unsigned int robotIndex() const;
@@ -1069,10 +1123,16 @@ public:
   }
 
   /** Access all grippers */
-  inline const std::vector<mc_control::GripperRef> & grippers() const noexcept { return data_->grippersRef; }
+  inline const std::vector<mc_control::GripperRef> & grippers() const noexcept
+  {
+    return data_->grippersRef;
+  }
 
   /** Access the data associated to this object */
-  inline const RobotDataPtr data() const noexcept { return data_; }
+  inline const RobotDataPtr data() const noexcept
+  {
+    return data_;
+  }
 
   /** Get the TVM robot associated to this robot
    *

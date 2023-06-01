@@ -70,8 +70,7 @@ namespace
 {
 static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
     "bspline_trajectory",
-    [](mc_solver::QPSolver & solver, const mc_rtc::Configuration & config)
-    {
+    [](mc_solver::QPSolver & solver, const mc_rtc::Configuration & config) {
       sva::PTransformd finalTarget_;
       mc_tasks::BSplineTrajectoryTask::waypoints_t waypoints;
       std::vector<std::pair<double, Eigen::Matrix3d>> oriWp;
@@ -91,11 +90,11 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
         const auto & targetSurfaceName = c(has_targetSurface ? "surface" : "frame");
         const auto & robot = robotFromConfig(c, solver.robots(), "bspline_trajectory::targetFrame");
 
-        const sva::PTransformd & targetFrame = robot.frame(targetSurfaceName).position();
+        const sva::PTransformd & targetSurface = robot.surface(targetSurfaceName).X_0_s(robot);
         const Eigen::Vector3d trans = c("translation", Eigen::Vector3d::Zero().eval());
         const Eigen::Matrix3d rot = c("rotation", Eigen::Matrix3d::Identity().eval());
         sva::PTransformd offset(rot, trans);
-        finalTarget_ = offset * targetFrame;
+        finalTarget_ = offset * targetSurface;
 
         if(c.has("controlPoints"))
         {
@@ -106,7 +105,7 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
           {
             const Eigen::Vector3d wp = controlPoints[i];
             sva::PTransformd X_offset(wp);
-            waypoints[i] = (X_offset * targetFrame).translation();
+            waypoints[i] = (X_offset * targetSurface).translation();
           }
         }
 
@@ -116,7 +115,7 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
           for(const auto & wp : oriWaypoints)
           {
             const sva::PTransformd offset{wp.second};
-            const sva::PTransformd ori = offset * targetFrame;
+            const sva::PTransformd ori = offset * targetSurface;
             oriWp.push_back(std::make_pair(wp.first, ori.rotation()));
           }
         }
@@ -140,8 +139,7 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
         oriWp = config("oriWaypoints", std::vector<std::pair<double, Eigen::Matrix3d>>{});
       }
 
-      const auto & frame = [&]() -> const mc_rbdyn::RobotFrame &
-      {
+      const auto & frame = [&]() -> const mc_rbdyn::RobotFrame & {
         if(config.has("surface"))
         {
           mc_rtc::log::deprecated("ExactCubicTrajectoryTask", "surface", "frame");

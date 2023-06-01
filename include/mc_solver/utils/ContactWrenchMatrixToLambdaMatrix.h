@@ -114,9 +114,15 @@ struct MC_SOLVER_DLLAPI ContactWrenchMatrixToLambdaMatrix
   ContactWrenchMatrixToLambdaMatrix(const mc_solver::QPSolver & solver, const tasks::qp::ContactId & cid);
 
   /** Compute the \f$A'\f$ matrix given the \f$A\f$ matrix */
-  inline Eigen::MatrixXd transform(const Eigen::MatrixXd & A) const { return A * transform_; }
+  inline Eigen::MatrixXd transform(const Eigen::MatrixXd & A) const
+  {
+    return A * transform_;
+  }
 
-  const Eigen::MatrixXd & transform() const { return transform_; }
+  const Eigen::MatrixXd & transform() const
+  {
+    return transform_;
+  }
 
 private:
   Eigen::MatrixXd transform_;

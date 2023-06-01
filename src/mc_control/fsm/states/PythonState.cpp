@@ -69,8 +69,7 @@ extern "C"
 
     PyGILState_Release(gstate);
     auto res = reinterpret_cast<PythonStateObject *>(s_obj);
-    res->impl->handle_python_error = []() -> bool
-    {
+    res->impl->handle_python_error = []() -> bool {
       auto gstate = PyGILState_Ensure();
       auto error = PyErr_Occurred();
       if(error)

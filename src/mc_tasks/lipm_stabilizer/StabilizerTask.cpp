@@ -37,7 +37,7 @@ StabilizerTask::StabilizerTask(const mc_rbdyn::Robots & robots,
   extWrenchSumLowPass_(dt, /* cutoffPeriod = */ 0.05), comOffsetLowPass_(dt, /* cutoffPeriod = */ 0.05),
   comOffsetLowPassCoM_(dt, /* cutoffPeriod = */ 1.0), comOffsetDerivator_(dt, /* timeConstant = */ 1.),
   dcmIntegrator_(dt, /* timeConstant = */ 15.), dcmDerivator_(dt, /* timeConstant = */ 1.), dt_(dt),
-  fSumFilter_(dt, /* cutoffPeriod = */ 2.), mass_(robots.robot(robotIndex).mass())
+  mass_(robots.robot(robotIndex).mass())
 {
   type_ = "lipm_stabilizer";
   name_ = type_ + "_" + robots.robot(robotIndex).name();
@@ -84,7 +84,10 @@ void StabilizerTask::reset()
   zmpTarget_ = Eigen::Vector3d{comTarget_.x(), comTarget_.y(), 0.};
   zmpdTarget_ = Eigen::Vector3d::Zero();
 
-  for(auto footTask : footTasks) { footTask.second->reset(); }
+  for(auto footTask : footTasks)
+  {
+    footTask.second->reset();
+  }
 
   pelvisTask->reset();
   torsoTask->reset();
@@ -114,7 +117,6 @@ void StabilizerTask::reset()
   comOffsetLowPass_.reset(Eigen::Vector3d::Zero());
   comOffsetLowPassCoM_.reset(Eigen::Vector3d::Zero());
   comOffsetDerivator_.reset(Eigen::Vector3d::Zero());
-  fSumFilter_.reset(Eigen::Vector3d{0, 0, robot().mass() * mc_rtc::constants::GRAVITY});
 
   dcmDerivator_.reset(Eigen::Vector3d::Zero());
   dcmIntegrator_.reset(Eigen::Vector3d::Zero());
@@ -122,12 +124,18 @@ void StabilizerTask::reset()
   omega_ = std::sqrt(constants::gravity.z() / robot().com().z());
   commitConfig();
 
-  if(contacts_.size() == 0) { setContacts({ContactState::Left, ContactState::Right}); }
+  if(contacts_.size() == 0)
+  {
+    setContacts({ContactState::Left, ContactState::Right});
+  }
   else
   {
     std::vector<ContactState> contactsToAdd;
     contactsToAdd.reserve(contacts_.size());
-    for(const auto & c : contacts_) { contactsToAdd.push_back(c.first); }
+    for(const auto & c : contacts_)
+    {
+      contactsToAdd.push_back(c.first);
+    }
     setContacts(contactsToAdd);
   }
 }
@@ -173,7 +181,10 @@ Eigen::VectorXd StabilizerTask::eval() const
   Eigen::VectorXd res(3 + 3 * contactTasks.size());
   res.head(3) = comTask->eval();
   int i = 0;
-  for(const auto & task : contactTasks) { res.segment(3 + 3 * i++, 3) = task->eval(); }
+  for(const auto & task : contactTasks)
+  {
+    res.segment(3 + 3 * i++, 3) = task->eval();
+  }
   return res;
 }
 
@@ -182,7 +193,10 @@ Eigen::VectorXd StabilizerTask::speed() const
   Eigen::VectorXd res(3 + 3 * contactTasks.size());
   res.head(3) = comTask->speed();
   int i = 0;
-  for(const auto & task : contactTasks) { res.segment(3 + 3 * i++, 3) = task->speed(); }
+  for(const auto & task : contactTasks)
+  {
+    res.segment(3 + 3 * i++, 3) = task->speed();
+  }
   return res;
 }
 
@@ -199,7 +213,10 @@ void StabilizerTask::removeFromSolver(mc_solver::QPSolver & solver)
   MetaTask::removeFromSolver(*comTask, solver);
   MetaTask::removeFromSolver(*pelvisTask, solver);
   MetaTask::removeFromSolver(*torsoTask, solver);
-  for(const auto & footTask : contactTasks) { MetaTask::removeFromSolver(*footTask, solver); }
+  for(const auto & footTask : contactTasks)
+  {
+    MetaTask::removeFromSolver(*footTask, solver);
+  }
 }
 
 void StabilizerTask::updateContacts(mc_solver::QPSolver & solver)
@@ -209,7 +226,10 @@ void StabilizerTask::updateContacts(mc_solver::QPSolver & solver)
     // Remove previous contacts
     for(const auto & contactT : contactTasks)
     {
-      if(c_.verbose) { mc_rtc::log::info("{}: Removing contact {}", name(), contactT->surface()); }
+      if(c_.verbose)
+      {
+        mc_rtc::log::info("{}: Removing contact {}", name(), contactT->surface());
+      }
       MetaTask::removeFromLogger(*contactT, *solver.logger());
       MetaTask::removeFromSolver(*contactT, solver);
     }
@@ -220,7 +240,10 @@ void StabilizerTask::updateContacts(mc_solver::QPSolver & solver)
     for(const auto contactState : addContacts_)
     {
       auto footTask = footTasks[contactState];
-      if(c_.verbose) { mc_rtc::log::info("{}: Adding contact {}", name(), footTask->surface()); }
+      if(c_.verbose)
+      {
+        mc_rtc::log::info("{}: Adding contact {}", name(), footTask->surface());
+      }
       MetaTask::addToSolver(*footTask, solver);
       MetaTask::addToLogger(*footTask, *solver.logger());
       contactTasks.push_back(footTask);
@@ -252,7 +275,10 @@ void StabilizerTask::update(mc_solver::QPSolver & solver)
   MetaTask::update(*comTask, solver);
   MetaTask::update(*pelvisTask, solver);
   MetaTask::update(*torsoTask, solver);
-  for(const auto & footTask : contactTasks) { MetaTask::update(*footTask, solver); }
+  for(const auto & footTask : contactTasks)
+  {
+    MetaTask::update(*footTask, solver);
+  }
 
   t_ += dt_;
 }
@@ -289,7 +315,7 @@ void StabilizerTask::disable()
   disableConfig_.dcmPropGain = 0.;
   disableConfig_.comdErrorGain = 0.;
   disableConfig_.zmpdGain = 0.;
-  disableConfig_.dfAdmittance.setZero();
+  disableConfig_.dfAdmittance = 0.;
   disableConfig_.vdcFrequency = 0.;
   disableConfig_.vdcStiffness = 0.;
   zmpcc_.enabled(false);
@@ -324,8 +350,6 @@ void StabilizerTask::configure_(mc_solver::QPSolver & solver)
   dcmIntegrator_.timeConstant(c_.dcmIntegratorTimeConstant);
   dcmIntegrator_.saturation(c_.safetyThresholds.MAX_AVERAGE_DCM_ERROR);
 
-  fSumFilter_.cutoffPeriod(c_.fSumFilterTimeConstant);
-
   extWrenchSumLowPass_.cutoffPeriod(c_.extWrench.extWrenchSumLowPassCutoffPeriod);
   comOffsetLowPass_.cutoffPeriod(c_.extWrench.comOffsetLowPassCutoffPeriod);
   comOffsetLowPassCoM_.cutoffPeriod(c_.extWrench.comOffsetLowPassCoMCutoffPeriod);
@@ -343,7 +367,10 @@ void StabilizerTask::configure_(mc_solver::QPSolver & solver)
 
   zmpcc_.configure(c_.zmpcc);
 
-  if(!c_.comActiveJoints.empty()) { comTask->selectActiveJoints(solver, c_.comActiveJoints); }
+  if(!c_.comActiveJoints.empty())
+  {
+    comTask->selectActiveJoints(solver, c_.comActiveJoints);
+  }
   comTask->setGains(c_.comStiffness, 2 * c_.comStiffness.cwiseSqrt());
   comTask->weight(c_.comWeight);
   comTask->dimWeight(c_.comDimWeight);
@@ -362,8 +389,7 @@ void StabilizerTask::configure_(mc_solver::QPSolver & solver)
 void StabilizerTask::checkConfiguration(const StabilizerConfiguration & config)
 {
   // Check whether feet have force sensors
-  auto checkSurface = [&](const std::string & surfaceName)
-  {
+  auto checkSurface = [&](const std::string & surfaceName) {
     if(!robot().hasSurface(surfaceName))
     {
       mc_rtc::log::error_and_throw("[{}] requires a surface named {} in robot {}", name(), surfaceName, robot().name());
@@ -392,13 +418,19 @@ void StabilizerTask::load(mc_solver::QPSolver &, const mc_rtc::Configuration & c
       if(config.has(contactName))
       {
         const auto & c = config(contactName);
-        if(c.has("rotation")) { contactPose.rotation() = c("rotation"); }
+        if(c.has("rotation"))
+        {
+          contactPose.rotation() = c("rotation");
+        }
         else if(c.has("overwriteRPY"))
         {
           // Only modify the specified DoF of the rotation
           mc_rtc::overwriteRotationRPY(c("overwriteRPY"), contactPose.rotation());
         }
-        if(c.has("translation")) { contactPose.translation() = c("translation"); }
+        if(c.has("translation"))
+        {
+          contactPose.translation() = c("translation");
+        }
         if(c.has("height"))
         {
           double h = c("height");
@@ -415,12 +447,18 @@ void StabilizerTask::load(mc_solver::QPSolver &, const mc_rtc::Configuration & c
   Eigen::Vector3d comTarget = robot().com();
   if(config.has("staticTarget"))
   {
-    if(config.has("com")) { comTarget = config("staticTarget")("com"); }
+    if(config.has("com"))
+    {
+      comTarget = config("staticTarget")("com");
+    }
   }
   this->staticTarget(comTarget, height);
 
   // Allow to start in disabled state
-  if(!config("enabled", true)) { this->disable(); }
+  if(!config("enabled", true))
+  {
+    this->disable();
+  }
 }
 
 const StabilizerConfiguration & StabilizerTask::config() const
@@ -470,7 +508,10 @@ void StabilizerTask::setContacts(const ContactDescriptionVector & contacts)
   supportMax_ = -supportMin_;
   supportPolygons_.clear();
 
-  for(const auto & contact : contacts) { addContact(contact.first, contact.second); }
+  for(const auto & contact : contacts)
+  {
+    addContact(contact.first, contact.second);
+  }
 }
 
 void StabilizerTask::addContact(ContactState contactState, const Contact & contact)
@@ -487,6 +528,7 @@ void StabilizerTask::addContact(ContactState contactState, const Contact & conta
   supportPolygons_.push_back(contact.polygon());
 
   // Configure support foot task
+  footTask->reset();
   footTask->weight(c_.contactWeight);
   footTask->targetPose(contact.surfacePose());
 
@@ -536,8 +578,14 @@ void StabilizerTask::computeLeftFootRatio()
     double d_proj = t_lankle_com.dot(t_lankle_rankle.normalized());
     leftFootRatio_ = clamp(d_proj / t_lankle_rankle.norm(), 0., 1.);
   }
-  else if(inContact(ContactState::Left)) { leftFootRatio_ = 0; }
-  else { leftFootRatio_ = 1; }
+  else if(inContact(ContactState::Left))
+  {
+    leftFootRatio_ = 0;
+  }
+  else
+  {
+    leftFootRatio_ = 1;
+  }
 }
 
 sva::PTransformd StabilizerTask::anchorFrame(const mc_rbdyn::Robot & robot) const
@@ -553,8 +601,14 @@ void StabilizerTask::updateZMPFrame()
     zmpFrame_ = sva::interpolate(contacts_.at(ContactState::Left).surfacePose(),
                                  contacts_.at(ContactState::Right).surfacePose(), 0.5);
   }
-  else if(inContact(ContactState::Left)) { zmpFrame_ = contacts_.at(ContactState::Left).surfacePose(); }
-  else { zmpFrame_ = contacts_.at(ContactState::Right).surfacePose(); }
+  else if(inContact(ContactState::Left))
+  {
+    zmpFrame_ = contacts_.at(ContactState::Left).surfacePose();
+  }
+  else
+  {
+    zmpFrame_ = contacts_.at(ContactState::Right).surfacePose();
+  }
 }
 
 void StabilizerTask::staticTarget(const Eigen::Vector3d & com, double zmpHeight)
@@ -572,7 +626,10 @@ void StabilizerTask::target(const Eigen::Vector3d & com,
 {
   comTargetRaw_ = com;
   comTarget_ = comTargetRaw_ - comOffsetErrCoM_;
-  if(c_.extWrench.addExpectedCoMOffset) { comTarget_ -= comOffsetTarget_; }
+  if(c_.extWrench.addExpectedCoMOffset)
+  {
+    comTarget_ -= comOffsetTarget_;
+  }
   comdTarget_ = comd;
   comddTarget_ = comdd;
   zmpTarget_ = zmp;
@@ -607,6 +664,11 @@ void StabilizerTask::setExternalWrenches(const std::vector<std::string> & surfac
   }
 
   computeWrenchOffsetAndCoefficient<&ExternalWrench::target>(robot(), comOffsetTarget_, zmpCoefTarget_);
+  comTarget_ = comTargetRaw_ - comOffsetErrCoM_;
+  if(c_.extWrench.addExpectedCoMOffset)
+  {
+    comTarget_ -= comOffsetTarget_;
+  }
 }
 
 template<sva::ForceVecd StabilizerTask::ExternalWrench::*TargetOrMeasured>
@@ -615,7 +677,17 @@ void StabilizerTask::computeWrenchOffsetAndCoefficient(const mc_rbdyn::Robot & r
                                                        double & coef_kappa) const
 {
   offset_gamma.setZero();
-  coef_kappa = 1;
+  coef_kappa = 0;
+  Eigen::Vector3d pos, force, moment;
+  for(const auto & extWrench : extWrenches_)
+  {
+    computeExternalContact(robot, extWrench.surfaceName, extWrench.*TargetOrMeasured, pos, force, moment);
+
+    offset_gamma.x() += (pos.z() - zmpTarget_.z()) * force.x() - pos.x() * force.z() + moment.y();
+    offset_gamma.y() += (pos.z() - zmpTarget_.z()) * force.y() - pos.y() * force.z() - moment.x();
+
+    coef_kappa -= force.z();
+  }
   double verticalComAcc = comddTarget_.z() + constants::gravity.z();
   double verticalComAccThre = 1e-3;
   if(std::abs(verticalComAcc) < verticalComAccThre)
@@ -625,21 +697,14 @@ void StabilizerTask::computeWrenchOffsetAndCoefficient(const mc_rbdyn::Robot & r
                          verticalComAcc);
     verticalComAcc = verticalComAcc >= 0 ? verticalComAccThre : -verticalComAccThre;
   }
+
   // \zeta in Murooka et al. RAL 2019
   double zeta = robot.mass() * verticalComAcc;
 
-  Eigen::Vector3d pos, force, moment;
-  for(const auto & extWrench : extWrenches_)
-  {
-    computeExternalContact(robot, extWrench.surfaceName, extWrench.*TargetOrMeasured, pos, force, moment);
-
-    offset_gamma.x() += (pos.z() - zmpTarget_.z()) * force.x() + (zmpTarget_.x() - pos.x()) * force.z() + moment.y();
-    offset_gamma.y() += (pos.z() - zmpTarget_.z()) * force.y() + (zmpTarget_.y() - pos.y()) * force.z() - moment.x();
-
-    coef_kappa -= force.z() / zeta;
-  }
-
   offset_gamma /= zeta;
+
+  coef_kappa /= zeta;
+  coef_kappa += 1.;
 }
 
 template<sva::ForceVecd StabilizerTask::ExternalWrench::*TargetOrMeasured>
@@ -697,50 +762,31 @@ void StabilizerTask::run()
       mc_rtc::log::error("[{}] ZMP computation failed, keeping previous value {}", name(),
                          MC_FMT_STREAMED(measuredZMP_.transpose()));
     }
-    sva::ForceVecd wrench = sva::ForceVecd::Zero();
-    for(const auto & footT : footTasks)
-    {
-      sva::PTransformd X_0_foot = footT.second->frame().position();
-      wrench += X_0_foot.inv().dualMul(footT.second->measuredWrench());
-    }
-    fSumFilter_.update(wrench.force());
   }
   else
   {
     measuredNetWrench_ = sva::ForceVecd::Zero();
-    fSumFilter_.update(Eigen::Vector3d{0, 0, robot().mass() * constants::GRAVITY});
   }
   desiredWrench_ = computeDesiredWrench();
 
   if(inDoubleSupport())
   {
-    if(horizonCoPDistribution_)
-    {
-      distributeCoPonHorizon(horizonZmpRef_, horizonDelta_);
-      horizonCoPDistribution_ = false;
-    }
-    else { distributeWrench(desiredWrench_); }
+    distributeWrench(desiredWrench_);
+  }
+  else if(inContact(ContactState::Left))
+  {
+    saturateWrench(desiredWrench_, footTasks[ContactState::Left], contacts_.at(ContactState::Left));
+    footTasks[ContactState::Right]->setZeroTargetWrench();
   }
   else
   {
-    tComputation_ = 0.;
-    if(inContact(ContactState::Left))
-    {
-      saturateWrench(desiredWrench_, footTasks[ContactState::Left], contacts_.at(ContactState::Left));
-      footTasks[ContactState::Right]->setZeroTargetWrench();
-    }
-    else
-    {
-      saturateWrench(desiredWrench_, footTasks[ContactState::Right], contacts_.at(ContactState::Right));
-      footTasks[ContactState::Left]->setZeroTargetWrench();
-    }
+    saturateWrench(desiredWrench_, footTasks[ContactState::Right], contacts_.at(ContactState::Right));
+    footTasks[ContactState::Left]->setZeroTargetWrench();
   }
-  distribZMP_ = mc_rbdyn::zmp(distribWrench_, zmpFrame_);
 
+  distribZMP_ = mc_rbdyn::zmp(distribWrench_, zmpFrame_);
   updateCoMTaskZMPCC();
   updateFootForceDifferenceControl();
-
-  if(c_.extWrench.addExpectedCoMOffset) { comTarget_ -= comOffsetTarget_; }
 
   comTask->com(comTarget_);
   comTask->refVel(comdTarget_);
@@ -787,9 +833,11 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
     {
       extWrench.measured = {extWrench.gain.vector().cwiseProduct(wrenchFrame.wrench().vector())};
     }
-    else { extWrench.measured = extWrench.target; }
+    else
+    {
+      extWrench.measured = extWrench.target;
+    }
   }
-  computeWrenchOffsetAndCoefficient<&ExternalWrench::target>(robot(), comOffsetTarget_, zmpCoefTarget_);
   computeWrenchOffsetAndCoefficient<&ExternalWrench::measured>(realRobot(), comOffsetMeasured_, zmpCoefMeasured_);
 
   if(inTheAir_)
@@ -805,7 +853,10 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
 
     if(c_.dcmBias.withDCMBias)
     {
-      if(omega_ != dcmEstimator_.getLipmNaturalFrequency()) { dcmEstimator_.setLipmNaturalFrequency(omega_); }
+      if(omega_ != dcmEstimator_.getLipmNaturalFrequency())
+      {
+        dcmEstimator_.setLipmNaturalFrequency(omega_);
+      }
 
       const Eigen::Matrix3d & waistOrientation = robot().posW().rotation().transpose();
 
@@ -827,9 +878,12 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
         {
           /// We have to send the oppopsite of the offset because the error is target - measured
           dcmEstimator_.setInputs(-measuredDCM_.head<2>(), -measuredZMP_.head<2>(), waistOrientation,
-                                  -comOffsetMeasured_.head<2>(), 1);
+                                  -comOffsetMeasured_.head<2>(), zmpCoefMeasured_);
         }
-        else { dcmEstimator_.setInputs(-measuredDCM_.head<2>(), -measuredZMP_.head<2>(), waistOrientation); }
+        else
+        {
+          dcmEstimator_.setInputs(-measuredDCM_.head<2>(), -measuredZMP_.head<2>(), waistOrientation);
+        }
       }
 
       /// run the estimation
@@ -841,7 +895,10 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
           /// the estimators provides a filtered DCM
           dcmError_.head<2>() = dcmEstimator_.getUnbiasedDCM();
         }
-        else { dcmError_.head<2>() -= dcmEstimator_.getBias(); }
+        else
+        {
+          dcmError_.head<2>() -= dcmEstimator_.getBias();
+        }
         /// the bias should also correct the CoM
         comError.head<2>() -= dcmEstimator_.getBias();
         /// the unbiased dcm allows also to get the velocity of the CoM
@@ -900,8 +957,14 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
   // Modify the desired CoM and ZMP depending on the external wrench error
   comOffsetLowPass_.update(comOffsetMeasured_ - comOffsetTarget_);
   comOffsetErr_ = comOffsetLowPass_.eval();
-  if(c_.extWrench.modifyCoMErr) { comOffsetLowPassCoM_.update(comOffsetErr_); }
-  else { comOffsetLowPassCoM_.update(Eigen::Vector3d::Zero()); }
+  if(c_.extWrench.modifyCoMErr)
+  {
+    comOffsetLowPassCoM_.update(comOffsetErr_);
+  }
+  else
+  {
+    comOffsetLowPassCoM_.update(Eigen::Vector3d::Zero());
+  }
   comOffsetErrCoM_ = comOffsetLowPassCoM_.eval();
   comOffsetErrZMP_ = comOffsetErr_ - comOffsetErrCoM_;
   clampInPlaceAndWarn(comOffsetErrCoM_, Eigen::Vector3d::Constant(-c_.extWrench.comOffsetErrCoMLimit).eval(),
@@ -909,8 +972,14 @@ sva::ForceVecd StabilizerTask::computeDesiredWrench()
   clampInPlaceAndWarn(comOffsetErrZMP_, Eigen::Vector3d::Constant(-c_.extWrench.comOffsetErrZMPLimit).eval(),
                       Eigen::Vector3d::Constant(c_.extWrench.comOffsetErrZMPLimit).eval(), "comOffsetErrZMP");
   comOffsetDerivator_.update(comOffsetErr_);
-  if(c_.extWrench.modifyZMPErr) { desiredCoMAccel -= omega_ * omega_ * comOffsetErrZMP_; }
-  if(c_.extWrench.modifyZMPErrD) { desiredCoMAccel -= (omega_ * omega_ / c_.zmpdGain) * comOffsetDerivator_.eval(); }
+  if(c_.extWrench.modifyZMPErr)
+  {
+    desiredCoMAccel -= omega_ * omega_ * comOffsetErrZMP_;
+  }
+  if(c_.extWrench.modifyZMPErrD)
+  {
+    desiredCoMAccel -= (omega_ * omega_ / c_.zmpdGain) * comOffsetDerivator_.eval();
+  }
 
   // Calculate the desired force and moment
   Eigen::Vector3d desiredForce = mass_ * (desiredCoMAccel + constants::gravity);
@@ -1059,337 +1128,6 @@ void StabilizerTask::distributeWrench(const sva::ForceVecd & desiredWrench)
   footTasks[ContactState::Right]->targetForce(w_r_rc.force());
 }
 
-void StabilizerTask::distributeCoPonHorizon(const std::vector<Eigen::Vector2d> & zmp_ref, const double delta)
-{
-  // Variables
-  // ---------
-  // sequence [ul_1_x,ul_1_y, ..., ul_n_x,ul_n_y,ur_1_x,ur_1_y, ..., ur_n_x,ur_n_y]
-  // [ur_i_x,ur_i_y]: Right CoP reference in the foot frame at the ith iteration
-  // [ul_i_x,ul_i_y]: Left  CoP reference in the foot frame at the ith iteration
-  // Objective
-  // ---------
-  // Weighted minimization of the following tasks:
-  //
-  // -- minimize the CoP position to be under the ankle for each foot
-  // -- minimize the CoP position difference between both feet in their respective frame
-  //
-  // (fr_i_z * ur_i_x + fl_i_z * ul_i_x)/(fl_i_z + fr_i_z) == zmp_ref_i  -- modeled CoP must match zmp reference (same
-  // for y)
-  //
-  // Constraints
-  // -----------
-  //
-  //  CoP within the contact polygon
-  //
-  // The decision variable are organised such as :
-  // indx i of the left CoP reference : 2 * i
-  // indx i of the right CoP reference : 2 * (n + i)
-
-  if(zmp_ref.size() == 0)
-  {
-    mc_rtc::log::error_and_throw<std::runtime_error>("[{}] [distributeCoPonHorizon] no zmp reference given");
-  }
-
-  const auto & leftContact = contacts_.at(ContactState::Left);
-  const auto & rightContact = contacts_.at(ContactState::Right);
-  const double fz_tot = fSumFilter_.eval().z(); // Vertical force applied by gravity on the whole robot
-
-  const sva::PTransformd & X_0_lc = leftContact.surfacePose();
-  const sva::PTransformd & X_0_rc = rightContact.surfacePose();
-
-  // translation vector from contact center to contact ankle in contact frame
-  //{
-  const Eigen::Vector3d t_rankle_rc = (X_0_rc * contacts_.at(ContactState::Right).anklePose().inv()).translation();
-  const Eigen::Vector3d t_lankle_lc = (X_0_lc * contacts_.at(ContactState::Left).anklePose().inv()).translation();
-  //}
-
-  const Eigen::Vector3d & lankle = contacts_.at(ContactState::Left).anklePose().translation();
-  const Eigen::Vector3d & rankle = contacts_.at(ContactState::Right).anklePose().translation();
-  const Eigen::Vector2d t_lankle_rankle = (rankle - lankle).segment(0, 2);
-
-  // The measured CoP is clamped in contact polygon
-  const Eigen::Vector2d measuredRightCoP = clamp(footTasks[ContactState::Right]->measuredCoP(),
-                                                 Eigen::Vector2d{-rightContact.halfLength(), -rightContact.halfWidth()},
-                                                 Eigen::Vector2d{rightContact.halfLength(), rightContact.halfWidth()});
-  const double measuredFzLeft =
-      clamp(X_0_rc.inv().dualMul(footTasks[ContactState::Left]->measuredWrench()).force().z(), 0, fz_tot);
-  const Eigen::Vector2d measuredLeftCoP = clamp(footTasks[ContactState::Left]->measuredCoP(),
-                                                Eigen::Vector2d{-leftContact.halfLength(), -leftContact.halfWidth()},
-                                                Eigen::Vector2d{leftContact.halfLength(), leftContact.halfWidth()});
-  const double measuredFzRight =
-      clamp(X_0_lc.inv().dualMul(footTasks[ContactState::Right]->measuredWrench()).force().z(), 0, fz_tot);
-
-  // double fz_tot = clamp( measuredFzRight + measuredFzLeft,0. ,robot().mass() * constants::GRAVITY );
-
-  // We consider an input to be considered as the reference for the delay
-  // At every sampling period
-  if(t_ - tComputation_ > delta || tComputation_ == 0.)
-  {
-    tComputation_ = t_;
-    delayedTargetCoPLeft_ = footTasks[ContactState::Left]->targetCoP();
-    delayedTargetCoPRight_ = footTasks[ContactState::Right]->targetCoP();
-    delayedTargetFzLeft_ = footTasks[ContactState::Left]->targetWrench().force().z();
-    delayedTargetFzRight_ = footTasks[ContactState::Right]->targetWrench().force().z();
-    modeledCoPLeft_ = measuredLeftCoP;
-    modeledCoPRight_ = measuredRightCoP;
-    modeledFzLeft_ = measuredFzLeft;
-    modeledFzRight_ = measuredFzRight;
-  }
-  double t_delay = clamp((c_.delayCoP - (t_ - tComputation_)), 0, c_.delayCoP);
-
-  Eigen::Vector3d targetForceLeft = Eigen::Vector3d::Zero();
-  Eigen::Vector3d targetForceRight = Eigen::Vector3d::Zero();
-
-  Eigen::Vector2d measuredLeftCoP_delayed;
-  double measuredFzLeft_delayed = 0;
-
-  measuredLeftCoP_delayed.x() = measuredLeftCoP.x() * exp(-c_.copFzLambda.x() * t_delay)
-                                + (1 - exp(-c_.copFzLambda.x() * t_delay)) * delayedTargetCoPLeft_.x();
-  measuredLeftCoP_delayed.y() = measuredLeftCoP.y() * exp(-c_.copFzLambda.y() * t_delay)
-                                + (1 - exp(-c_.copFzLambda.y() * t_delay)) * delayedTargetCoPLeft_.y();
-
-  Eigen::Vector2d measuredRightCoP_delayed;
-  double measuredFzRight_delayed = 0;
-  measuredRightCoP_delayed.x() = measuredRightCoP.x() * exp(-c_.copFzLambda.x() * t_delay)
-                                 + (1 - exp(-c_.copFzLambda.x() * t_delay)) * delayedTargetCoPRight_.x();
-  measuredRightCoP_delayed.y() = measuredRightCoP.y() * exp(-c_.copFzLambda.y() * t_delay)
-                                 + (1 - exp(-c_.copFzLambda.y() * t_delay)) * delayedTargetCoPRight_.y();
-
-  if(supportFoot_ == ContactState::Left)
-  {
-    measuredFzRight_delayed = measuredFzRight * exp(-c_.copFzLambda.z() * t_delay)
-                              + (1 - exp(-c_.copFzLambda.z() * t_delay)) * delayedTargetFzRight_;
-    measuredFzLeft_delayed = fz_tot - measuredFzRight_delayed;
-  }
-  else
-  {
-    measuredFzLeft_delayed = measuredFzLeft * exp(-c_.copFzLambda.z() * t_delay)
-                             + (1 - exp(-c_.copFzLambda.z() * t_delay)) * delayedTargetFzLeft_;
-    measuredFzRight_delayed = fz_tot - measuredFzLeft_delayed;
-  }
-
-  clampInPlace(measuredFzLeft_delayed, 0, fz_tot);
-  clampInPlace(measuredFzRight_delayed, 0, fz_tot);
-
-  measuredLeftCoP_delayed.segment(0, 2) =
-      clamp(Eigen::Vector2d{measuredLeftCoP_delayed.x(), measuredLeftCoP_delayed.y()},
-            Eigen::Vector2d{-leftContact.halfLength(), -leftContact.halfWidth()},
-            Eigen::Vector2d{leftContact.halfLength(), leftContact.halfWidth()});
-  measuredRightCoP_delayed.segment(0, 2) =
-      clamp(Eigen::Vector2d{measuredRightCoP_delayed.x(), measuredRightCoP_delayed.y()},
-            Eigen::Vector2d{-rightContact.halfLength(), -rightContact.halfWidth()},
-            Eigen::Vector2d{rightContact.halfLength(), rightContact.halfWidth()});
-
-  const int nbReferences = static_cast<int>(zmp_ref.size());
-  const int nbVariables = 2 * 2 * nbReferences; // Each reference induce 2 CoP which has 2 coordinates x y
-  const int nbIneqCstr = 8 * nbReferences; // Each CoP has 4 cstr to remain bounded in contact polygone
-  const int nbEqCstr = 2 * nbReferences;
-
-  // Task to meet the CoPs to the reference ZMP
-  Eigen::MatrixXd Mcop = Eigen::MatrixXd::Zero(nbEqCstr, nbVariables);
-  Eigen::VectorXd bcop = Eigen::VectorXd::Zero(Mcop.rows());
-
-  // Task to regulate the CoPs under the foot ankle
-  Eigen::MatrixXd McopReg = Eigen::MatrixXd::Zero(nbVariables, nbVariables);
-  Eigen::VectorXd bcopReg = Eigen::VectorXd::Zero(McopReg.rows());
-
-  // Task to regulate the CoPs difference
-  Eigen::MatrixXd McopDiff = Eigen::MatrixXd::Zero(2 * nbReferences, nbVariables);
-  Eigen::VectorXd bcopDiff = Eigen::VectorXd::Zero(McopDiff.rows());
-
-  Eigen::MatrixXd Aineq = Eigen::MatrixXd::Zero(nbIneqCstr, nbVariables);
-  Eigen::VectorXd bineq = Eigen::VectorXd::Zero(Aineq.rows());
-
-  Eigen::Matrix<double, 4, 2> normals; // normals matrix for CoP constraints
-  Eigen::Vector4d offsetLeft = Eigen::Vector4d::Zero();
-  Eigen::Vector4d offsetRight = Eigen::Vector4d::Zero();
-  normals << 1, 0, -1, 0, 0, 1, 0, -1;
-
-  offsetLeft << leftContact.halfLength(), leftContact.halfLength(), leftContact.halfWidth(), leftContact.halfWidth();
-
-  offsetRight << rightContact.halfLength(), rightContact.halfLength(), rightContact.halfWidth(),
-      rightContact.halfWidth();
-
-  Eigen::Vector2d t_lankle_zmp = zmp_ref[0] - lankle.segment(0, 2);
-  const double lankle_rankle = t_lankle_rankle.norm();
-  double d_proj = t_lankle_zmp.dot(t_lankle_rankle.normalized());
-  // The vertical forces are splitted using the ratio obtained between the reference zmp pose and the contact pose;
-  double ratio = clamp(d_proj / lankle_rankle, c_.safetyThresholds.MIN_DS_PRESSURE / fz_tot,
-                       1 - (c_.safetyThresholds.MIN_DS_PRESSURE / fz_tot));
-
-  desiredFzLeft_ = (1 - ratio) * fz_tot;
-  desiredFzRight_ = ratio * fz_tot;
-
-  // We modeled the vertical forces to also follow a 1st order behavior between the reference and the state
-  targetForceLeft.z() = desiredFzLeft_ - measuredFzLeft_delayed * exp(-c_.copFzLambda.z() * (delta - t_delay));
-  targetForceLeft.z() /= (1 - exp(-c_.copFzLambda.z() * (delta - t_delay)));
-
-  targetForceRight.z() = desiredFzRight_ - measuredFzRight_delayed * exp(-c_.copFzLambda.z() * (delta - t_delay));
-  targetForceRight.z() /= (1 - exp(-c_.copFzLambda.z() * (delta - t_delay)));
-
-  const double ratio0 = ratio;
-
-  for(Eigen::Index i = 0; i < nbReferences; i++)
-  {
-
-    if(i != 0)
-    {
-
-      t_lankle_zmp = zmp_ref[i] - lankle.segment(0, 2);
-      d_proj = t_lankle_zmp.dot(t_lankle_rankle.normalized());
-      // ratio = 1 : fz on rightfoot, 0 on leftFoot
-      ratio = clamp(d_proj / lankle_rankle, c_.safetyThresholds.MIN_DS_PRESSURE / fz_tot,
-                    1 - (c_.safetyThresholds.MIN_DS_PRESSURE / fz_tot));
-    }
-
-    // Acop convert the CoP reference into the modeled CoP
-    // x be vector cotaining the CoP reference for one foot
-    // Acop * x + cop_0 * e^(-lambda t_i) = cop i in foot frame (left/right)
-    Eigen::MatrixXd Acop = Eigen::MatrixXd::Zero(2, 2 * nbReferences);
-    double t = static_cast<double>(i) * delta;
-    Eigen::Matrix2d exp_mat;
-    exp_mat << exp(-c_.copFzLambda.x() * (t + delta - (i == 0 ? t_delay : c_.delayCoP))), 0, 0,
-        exp(-c_.copFzLambda.y() * (t + delta - (i == 0 ? t_delay : c_.delayCoP)));
-    for(Eigen::Index k = 0; k <= i; k++)
-    {
-      if(k == i)
-      {
-        Acop(0, 2 * k) =
-            (1 - exp(-c_.copFzLambda.x() * (delta - (i == 0 ? t_delay : c_.delayCoP)))) * exp(-c_.copFzLambda.x() * t);
-        Acop(1, 2 * k + 1) =
-            (1 - exp(-c_.copFzLambda.y() * (delta - (i == 0 ? t_delay : c_.delayCoP)))) * exp(-c_.copFzLambda.y() * t);
-      }
-      else
-      {
-        Acop(0, 2 * k) = (1 - exp(-c_.copFzLambda.x() * delta)) * exp(-c_.copFzLambda.x() * t);
-        Acop(1, 2 * k + 1) = (1 - exp(-c_.copFzLambda.y() * delta)) * exp(-c_.copFzLambda.y() * t);
-      }
-      t -= delta;
-    }
-    auto Acop_view = Acop.block(0, 0, 2, 2 * (i + 1));
-    // The task regulate zmp_i = (cop_l * f_z_l + cop_r * f_z_r)/f_z in world frame
-    Mcop.block(2 * i, 0, 2, Acop_view.cols()) = X_0_lc.inv().rotation().block(0, 0, 2, 2) * (1 - ratio) * Acop_view;
-    Mcop.block(2 * i, 2 * nbReferences, 2, Acop_view.cols()) =
-        X_0_rc.inv().rotation().block(0, 0, 2, 2) * ratio * Acop_view;
-
-    // clang-format off
-    bcop.segment(2 * i, 2) =
-        zmp_ref[i]
-        - X_0_lc.translation().segment(0, 2) * (1 - ratio)
-        - X_0_rc.translation().segment(0, 2) * (ratio)
-        - X_0_lc.inv().rotation().block(0, 0, 2, 2) * (1 - ratio) * exp_mat * measuredLeftCoP_delayed.segment(0, 2)
-        - X_0_rc.inv().rotation().block(0, 0, 2, 2) * (ratio) * exp_mat * measuredRightCoP_delayed.segment(0, 2);
-    // clang-format on
-
-    McopReg.block(2 * i, 0, 2, Acop_view.cols()) = Acop_view;
-    McopReg.block(2 * nbReferences + 2 * i, 2 * nbReferences, 2, Acop_view.cols()) = Acop_view;
-    bcopReg.segment(2 * i, 2) = -t_lankle_lc.segment(0, 2) - exp_mat * measuredLeftCoP_delayed.segment(0, 2);
-    bcopReg.segment(2 * (i + nbReferences), 2) =
-        -t_rankle_rc.segment(0, 2) - exp_mat * measuredRightCoP_delayed.segment(0, 2);
-
-    // CoP must remain bounded in polygon cstr
-    Aineq.block(4 * i, 0, 4, Acop_view.cols()) = normals * Acop_view;
-
-    bineq.segment(4 * i, 4) = offsetLeft - normals * exp_mat * measuredLeftCoP_delayed.segment(0, 2);
-    bineq.segment(4 * (nbReferences + i), 4) = offsetRight - normals * exp_mat * measuredRightCoP_delayed.segment(0, 2);
-
-    McopDiff.block(2 * i, 0, 2, Acop_view.cols()) = Acop_view;
-    McopDiff.block(2 * i, 2 * nbReferences, 2, Acop_view.cols()) = -Acop_view;
-    bcopDiff.segment(2 * i, 2) = exp_mat * (measuredLeftCoP_delayed - measuredRightCoP_delayed).segment(0, 2);
-  }
-
-  // We copy the constraint for the other contact
-  Aineq.block(4 * nbReferences, 2 * nbReferences, 4 * nbReferences, 2 * nbReferences) =
-      Aineq.block(0, 0, 4 * nbReferences, 2 * nbReferences);
-
-  Eigen::MatrixXd Q = c_.fdmpcWeights.cop_ * Mcop.transpose() * Mcop;
-  Q += c_.fdmpcWeights.copDiff_ * McopDiff.transpose() * McopDiff;
-  Q += c_.fdmpcWeights.copRegulation_ * McopReg.transpose() * McopReg;
-
-  Eigen::VectorXd c = c_.fdmpcWeights.cop_ * (-Mcop.transpose() * bcop);
-  c += c_.fdmpcWeights.copDiff_ * (McopDiff.transpose() * bcopDiff);
-  c += c_.fdmpcWeights.copRegulation_ * (-McopReg.transpose() * bcopReg);
-
-  qpSolver_.problem(nbVariables, 0, nbIneqCstr);
-  Eigen::MatrixXd Aeq(0, 0);
-  Eigen::VectorXd beq;
-  beq.resize(0);
-
-  bool solutionFound = qpSolver_.solve(Q, c, Aeq, beq, Aineq, bineq, /* isDecomp = */ false);
-  if(!solutionFound)
-  {
-    mc_rtc::log::error("[{}] DS force/CoP distribution QP: solver found no solution", name());
-    return;
-  }
-
-  Eigen::VectorXd x = qpSolver_.result();
-  Eigen::Vector2d leftCoP(x.segment(0, 2));
-  Eigen::Vector2d rightCoP(x.segment(2 * nbReferences, 2));
-
-  Eigen::Matrix2d exp_mat;
-  exp_mat << exp(-c_.copFzLambda.x() * (delta - t_delay)), 0, 0, exp(-c_.copFzLambda.y() * (delta - t_delay));
-
-  // Get the next modeled CoP by the QP
-  QPCoPLeft_ = exp_mat * measuredLeftCoP_delayed.segment(0, 2) + (Eigen::Matrix2d::Identity() - exp_mat) * leftCoP;
-  QPCoPRight_ = exp_mat * measuredRightCoP_delayed.segment(0, 2) + (Eigen::Matrix2d::Identity() - exp_mat) * rightCoP;
-
-  // Check that the computed modeled ZMP coincide with the ZMP reference
-  distribCheck_ = (1 - ratio0) * (X_0_lc.translation().segment(0, 2) + QPCoPLeft_)
-                  + ratio0 * (X_0_rc.translation().segment(0, 2) + QPCoPRight_) - zmp_ref[0];
-
-  sva::ForceVecd w_l_lc = sva::ForceVecd{
-      Eigen::Vector3d{leftCoP.y() * targetForceLeft.z(), -leftCoP.x() * targetForceLeft.z(), 0}, targetForceLeft};
-  sva::ForceVecd w_r_rc = sva::ForceVecd{
-      Eigen::Vector3d{rightCoP.y() * targetForceRight.z(), -rightCoP.x() * targetForceRight.z(), 0}, targetForceRight};
-
-  footTasks[ContactState::Left]->targetCoP(leftCoP);
-  footTasks[ContactState::Left]->targetForce(w_l_lc.force());
-  footTasks[ContactState::Right]->targetCoP(rightCoP);
-  footTasks[ContactState::Right]->targetForce(w_r_rc.force());
-  distribWrench_ = X_0_lc.inv().dualMul(w_l_lc) + X_0_rc.inv().dualMul(w_r_rc);
-
-  // We update the model CoP for logging
-  if(c_.delayCoP != 0 && t_delay > 0)
-  {
-    modeledCoPLeft_.x() =
-        (delayedTargetCoPLeft_ + (modeledCoPLeft_ - delayedTargetCoPLeft_) * exp(-c_.copFzLambda.x() * dt_)).x();
-    modeledCoPLeft_.y() =
-        (delayedTargetCoPLeft_ + (modeledCoPLeft_ - delayedTargetCoPLeft_) * exp(-c_.copFzLambda.y() * dt_)).y();
-    modeledCoPRight_.x() =
-        (delayedTargetCoPRight_ + (modeledCoPRight_ - delayedTargetCoPRight_) * exp(-c_.copFzLambda.x() * dt_)).x();
-    modeledCoPRight_.y() =
-        (delayedTargetCoPRight_ + (modeledCoPRight_ - delayedTargetCoPRight_) * exp(-c_.copFzLambda.y() * dt_)).y();
-    modeledFzLeft_ = (delayedTargetFzLeft_ + (modeledFzLeft_ - delayedTargetFzLeft_) * exp(-c_.copFzLambda.z() * dt_));
-    modeledFzRight_ =
-        (delayedTargetFzRight_ + (modeledFzRight_ - delayedTargetFzRight_) * exp(-c_.copFzLambda.z() * dt_));
-  }
-  else
-  {
-    modeledCoPLeft_.x() =
-        (footTasks[ContactState::Left]->targetCoP()
-         + (modeledCoPLeft_ - footTasks[ContactState::Left]->targetCoP()) * exp(-c_.copFzLambda.x() * dt_))
-            .x();
-    modeledCoPLeft_.y() =
-        (footTasks[ContactState::Left]->targetCoP()
-         + (modeledCoPLeft_ - footTasks[ContactState::Left]->targetCoP()) * exp(-c_.copFzLambda.y() * dt_))
-            .y();
-    modeledCoPRight_.x() =
-        (footTasks[ContactState::Right]->targetCoP()
-         + (modeledCoPRight_ - footTasks[ContactState::Right]->targetCoP()) * exp(-c_.copFzLambda.x() * dt_))
-            .x();
-    modeledCoPRight_.y() =
-        (footTasks[ContactState::Right]->targetCoP()
-         + (modeledCoPRight_ - footTasks[ContactState::Right]->targetCoP()) * exp(-c_.copFzLambda.y() * dt_))
-            .y();
-    modeledFzLeft_ = (footTasks[ContactState::Left]->targetWrench().force().z()
-                      + (modeledFzLeft_ - footTasks[ContactState::Left]->targetWrench().force().z())
-                            * exp(-c_.copFzLambda.z() * dt_));
-    modeledFzRight_ = (footTasks[ContactState::Right]->targetWrench().force().z()
-                       + (modeledFzRight_ - footTasks[ContactState::Right]->targetWrench().force().z())
-                             * exp(-c_.copFzLambda.z() * dt_));
-  }
-}
-
 void StabilizerTask::saturateWrench(const sva::ForceVecd & desiredWrench,
                                     std::shared_ptr<mc_tasks::force::CoPTask> & footTask,
                                     const Contact & contact)
@@ -1530,8 +1268,7 @@ namespace
 {
 static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
     "lipm_stabilizer",
-    [](mc_solver::QPSolver & solver, const mc_rtc::Configuration & config)
-    {
+    [](mc_solver::QPSolver & solver, const mc_rtc::Configuration & config) {
       unsigned robotIndex = robotIndexFromConfig(config, solver.robots(), "lipm_stabilizer");
       const auto & robot = solver.robots().robot(robotIndex);
 
@@ -1540,7 +1277,10 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
       // Load user-specified configuration
       stabiConf.load(config);
       // Load user-specified stabilizer configuration for this robot
-      if(config.has(robot.name())) { stabiConf.load(config(robot.name())); }
+      if(config.has(robot.name()))
+      {
+        stabiConf.load(config(robot.name()));
+      }
 
       auto t = std::allocate_shared<mc_tasks::lipm_stabilizer::StabilizerTask>(
           Eigen::aligned_allocator<mc_tasks::lipm_stabilizer::StabilizerTask>{}, solver.robots(), solver.realRobots(),
