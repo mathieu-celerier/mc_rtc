@@ -15,6 +15,8 @@
 
 #include <mc_rtc/logging.h>
 
+#include <sch/S_Object/S_Sphere.h>
+
 #include <boost/test/unit_test.hpp>
 
 #ifndef M_PI
@@ -55,6 +57,26 @@ public:
     // Check that the box is loaded
     BOOST_REQUIRE(robots().hasRobot("box"));
 
+    // Add a bunch of collision objects to the ground
+    for(size_t i = 0; i < 10; ++i)
+    {
+      auto & g = robot("ground");
+      auto & b = g.mb().body(0).name();
+      g.addConvex(fmt::format("object{}", i), b, std::make_shared<sch::S_Sphere>(1.0));
+    }
+    // Check the wildcard adding
+    addCollisions("jvrc1", "ground", {{"R_WRIST_Y_S", "object*", iDist, sDist, 0}});
+    for(size_t i = 0; i < 10; ++i)
+    {
+      BOOST_REQUIRE(hasCollision("jvrc1", "ground", "R_WRIST_Y_S", fmt::format("object{}", i)));
+    }
+    // Check the wildcard removing
+    removeCollisions("jvrc1", "ground", {{"R_WRIST_Y_S", "object*", iDist, sDist, 0}});
+    for(size_t i = 0; i < 10; ++i)
+    {
+      BOOST_REQUIRE(!hasCollision("jvrc1", "ground", "R_WRIST_Y_S", fmt::format("object{}", i)));
+    }
+
     solver().addConstraintSet(contactConstraint);
     solver().addConstraintSet(kinematicsConstraint);
     solver().addConstraintSet(cstr_);
@@ -62,6 +84,7 @@ public:
     addContact({"jvrc1", "ground", "LeftFoot", "AllGround"});
     addContact({"jvrc1", "ground", "RightFoot", "AllGround"});
     addCollisions("jvrc1", "box", {{"R_WRIST_Y_S", "box", iDist, sDist, 0}});
+    BOOST_REQUIRE(hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
     mc_rtc::log::success("Created TestCollisionController");
   }
 
@@ -74,32 +97,35 @@ public:
     {
       resetBox();
       removeCollisions("jvrc1", "box");
+      BOOST_REQUIRE(!hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
       std::vector<std::string> arm_joints = {"R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P",
                                              "R_ELBOW_Y",    "R_WRIST_R",    "R_WRIST_Y"};
       addCollisions("jvrc1", "box", {{"R_WRIST_Y_S", "box", iDist, sDist, 0, arm_joints}});
+      BOOST_REQUIRE(hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
     }
     if(nrIter == 1000)
     {
       resetBox();
       removeCollisions("jvrc1", "box");
+      BOOST_REQUIRE(!hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
       std::vector<std::string> arm_joints = {"R_SHOULDER_P"};
       addCollisions("jvrc1", "box", {{"R_WRIST_Y_S", "box", iDist, sDist, 0, arm_joints}});
+      BOOST_REQUIRE(hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
     }
     if(nrIter == 1500)
     {
       resetBox();
       removeCollisions("jvrc1", "box");
+      BOOST_REQUIRE(!hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
       std::vector<std::string> arm_joints = {"R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P",
                                              "R_ELBOW_Y",    "R_WRIST_R",    "R_WRIST_Y"};
       std::vector<std::string> selected_joints = {"Root"};
       for(const auto & j : robot().module().ref_joint_order())
       {
-        if(std::find(arm_joints.begin(), arm_joints.end(), j) != arm_joints.end())
-        {
-          selected_joints.push_back(j);
-        }
+        if(std::find(arm_joints.begin(), arm_joints.end(), j) != arm_joints.end()) { selected_joints.push_back(j); }
       }
       addCollisions("jvrc1", "box", {{"R_WRIST_Y_S", "box", iDist, sDist, 0, selected_joints}});
+      BOOST_REQUIRE(hasCollision("jvrc1", "box", "R_WRIST_Y_S", "box"));
     }
     return ret;
   }

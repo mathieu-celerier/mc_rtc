@@ -39,21 +39,22 @@ public:
       BOOST_REQUIRE(datastore().has("Replay::Log"));
       BOOST_REQUIRE(!datastore().has("NOT_IN_DATASTORE"));
     }
-    else
-    {
-      BOOST_REQUIRE(!datastore().has("Replay::Log"));
-    }
+    else { BOOST_REQUIRE(!datastore().has("Replay::Log")); }
     bool ret = MCController::run();
     iters_ += 1;
     if constexpr(Play)
     {
       BOOST_REQUIRE(datastore().has("iter"));
       uint64_t log_iter = datastore().template get<uint64_t>("iter");
-      if(log_iter != iters_)
-      {
-        mc_rtc::log::critical("{} != {}", log_iter, iters_);
-      }
+      if(log_iter != iters_) { mc_rtc::log::critical("{} != {}", log_iter, iters_); }
       BOOST_REQUIRE(log_iter == iters_);
+
+      BOOST_REQUIRE(datastore().has("RENAMED_T"));
+      double renamed_t = datastore().template get<double>("RENAMED_T");
+      double expected_t = static_cast<double>(log_iter - 1) * timeStep;
+      bool test_t = std::fabs(expected_t - renamed_t) < 1e-6;
+      if(!test_t) { mc_rtc::log::critical("{} != {}", expected_t, renamed_t); }
+      BOOST_REQUIRE(test_t);
     }
     return ret;
   }
@@ -76,10 +77,7 @@ public:
 
   void stop() override
   {
-    if constexpr(!Play)
-    {
-      logger().flush();
-    }
+    if constexpr(!Play) { logger().flush(); }
   }
 
 private:
@@ -111,10 +109,7 @@ extern "C"
                                                           const double & dt,
                                                           const mc_control::Configuration & cfg)
   {
-    if(name == "TestReplayController_Record")
-    {
-      return new mc_control::TestReplayController<false>(robot, dt, cfg);
-    }
+    if(name == "TestReplayController_Record") { return new mc_control::TestReplayController<false>(robot, dt, cfg); }
     else
     {
       assert(name == "TestReplayController_Play");

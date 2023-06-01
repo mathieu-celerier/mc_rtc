@@ -33,18 +33,9 @@ struct MC_RBDYN_DLLAPI FDQPWeights
 
   void load(const mc_rtc::Configuration & config)
   {
-    if(config.has("ankle_torque"))
-    {
-      ankleTorqueSqrt = std::sqrt(static_cast<double>(config("ankle_torque")));
-    }
-    if(config.has("net_wrench"))
-    {
-      netWrenchSqrt = std::sqrt(static_cast<double>(config("net_wrench")));
-    }
-    if(config.has("pressure"))
-    {
-      pressureSqrt = std::sqrt(static_cast<double>(config("pressure")));
-    }
+    if(config.has("ankle_torque")) { ankleTorqueSqrt = std::sqrt(static_cast<double>(config("ankle_torque"))); }
+    if(config.has("net_wrench")) { netWrenchSqrt = std::sqrt(static_cast<double>(config("net_wrench"))); }
+    if(config.has("pressure")) { pressureSqrt = std::sqrt(static_cast<double>(config("pressure"))); }
   }
 
   mc_rtc::Configuration save() const
@@ -53,6 +44,44 @@ struct MC_RBDYN_DLLAPI FDQPWeights
     config.add("ankle_torque", std::pow(ankleTorqueSqrt, 2));
     config.add("net_wrench", std::pow(netWrenchSqrt, 2));
     config.add("pressure", std::pow(pressureSqrt, 2));
+    return config;
+  }
+};
+
+/** Weights for CoP distribution over horizon (FDMPC). */
+struct MC_RBDYN_DLLAPI FDMPCWeights
+{
+
+  FDMPCWeights()
+  {
+    cop_ = 100;
+    copRegulation_ = 1e-8;
+    copDiff_ = 1e-8;
+  }
+
+  FDMPCWeights(double cop, double copReg, double copDiff)
+  {
+    cop_ = cop;
+    copRegulation_ = copReg;
+    copDiff_ = copDiff;
+  }
+  double cop_;
+  double copRegulation_;
+  double copDiff_;
+
+  void load(const mc_rtc::Configuration & config)
+  {
+    if(config.has("cop")) { cop_ = static_cast<double>(config("cop")); }
+    if(config.has("cop_regulation")) { copRegulation_ = static_cast<double>(config("cop_regulation")); }
+    if(config.has("cop_diff")) { copDiff_ = static_cast<double>(config("cop_diff")); }
+  }
+
+  mc_rtc::Configuration save() const
+  {
+    mc_rtc::Configuration config;
+    config.add("cop", cop_);
+    config.add("cop_regulation", copRegulation_);
+    config.add("cop_diff", copDiff_);
     return config;
   }
 };
@@ -311,10 +340,23 @@ struct ConfigurationLoader<mc_rbdyn::lipm_stabilizer::FDQPWeights>
     return weights;
   }
 
-  static mc_rtc::Configuration save(const mc_rbdyn::lipm_stabilizer::FDQPWeights & weights)
+  static mc_rtc::Configuration save(const mc_rbdyn::lipm_stabilizer::FDQPWeights & weights) { return weights.save(); }
+};
+
+/**
+ * @brief Read CoP distribution over horizon QP weights from configuration.
+ */
+template<>
+struct ConfigurationLoader<mc_rbdyn::lipm_stabilizer::FDMPCWeights>
+{
+  static mc_rbdyn::lipm_stabilizer::FDMPCWeights load(const mc_rtc::Configuration & config)
   {
-    return weights.save();
+    mc_rbdyn::lipm_stabilizer::FDMPCWeights weights;
+    weights.load(config);
+    return weights;
   }
+
+  static mc_rtc::Configuration save(const mc_rbdyn::lipm_stabilizer::FDMPCWeights & weights) { return weights.save(); }
 };
 
 /**
@@ -397,6 +439,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
 
   SafetyThresholds safetyThresholds;
   FDQPWeights fdqpWeights;
+  FDMPCWeights fdmpcWeights;
 
   double friction = 0.7; /**< Friction coefficient. Same for both feet */
   std::string leftFootSurface; /**< Surface name for the left foot. Origin should be at foot's center */
@@ -422,11 +465,17 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
       15.; /**< Time window for exponential moving average filter of the DCM integrator */
   double dcmDerivatorTimeConstant = 1.; /**< Cutoff Period of the DCM derivator filter */
 
+  double fSumFilterTimeConstant = 20.; /**<Cutoff Period of the estimation of the sum of forces*/
+
   std::vector<std::string> comActiveJoints; /**< Joints used by CoM IK task */
   Eigen::Vector3d comStiffness = {1000., 1000., 100.}; /**< Stiffness of CoM IK task */
   double comWeight = 1000.; /**< Weight of CoM IK task */
   Eigen::Vector3d comDimWeight = Eigen::Vector3d::Ones(); /**< Dimensional weight of CoM IK task */
   double comHeight = 0.84; /**< Desired height of the CoM */
+
+  /**< 1st order gain constant between a reference CoP and vertical force and the real */
+  Eigen::Vector3d copFzLambda = 100.0 * Eigen::Vector3d::Ones();
+  double delayCoP = 0;
 
   std::string torsoBodyName; /**< Name of the torso body */
   double torsoPitch = 0; /**< Target world pitch angle for the torso */
@@ -451,10 +500,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
 
   StabilizerConfiguration() {}
 
-  StabilizerConfiguration(const mc_rtc::Configuration & conf)
-  {
-    load(conf);
-  }
+  StabilizerConfiguration(const mc_rtc::Configuration & conf) { load(conf); }
 
   /**
    * @brief Checks that the chosen parameters are within the parameters defined
@@ -479,15 +525,11 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
   {
     config("verbose", verbose);
 
-    if(config.has("safety_tresholds"))
-    {
-      safetyThresholds.load(config("safety_tresholds"));
-    }
+    if(config.has("safety_tresholds")) { safetyThresholds.load(config("safety_tresholds")); }
 
-    if(config.has("fdqp_weights"))
-    {
-      fdqpWeights.load(config("fdqp_weights"));
-    }
+    if(config.has("fdqp_weights")) { fdqpWeights.load(config("fdqp_weights")); }
+
+    if(config.has("fdmpc_weights")) { fdmpcWeights.load(config("fdmpc_weights")); }
 
     config("friction", friction);
     config("leftFootSurface", leftFootSurface);
@@ -498,6 +540,8 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
     {
       auto admittance = config("admittance");
       admittance("cop", copAdmittance);
+      admittance("copFzLambda", copFzLambda);
+      admittance("copFzDelay", delayCoP);
       admittance("maxVel", copMaxVel);
       admittance("velFilterGain", mc_filter::utils::clamp(copVelFilterGain, 0, 1));
       if(admittance.has("dfz"))
@@ -507,10 +551,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
         dfAdmittance.setZero();
         dfAdmittance.z() = admittance("dfz");
       }
-      else
-      {
-        admittance("df", dfAdmittance);
-      }
+      else { admittance("df", dfAdmittance); }
       if(admittance.has("dfz_damping"))
       {
         mc_rtc::log::warning("[MC_RTC_DEPRECATED][StabilizerConfiguration] dfz_damping is now dimensional, to "
@@ -518,10 +559,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
         dfDamping.setZero();
         dfDamping.z() = admittance("dfz_damping");
       }
-      else
-      {
-        admittance("df_damping", dfDamping);
-      }
+      else { admittance("df_damping", dfDamping); }
     }
     if(config.has("dcm_tracking"))
     {
@@ -542,14 +580,8 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
       dcmTracking("derivator_cutoff_period", dcmDerivatorTimeConstant);
       dcmTracking("integrator_time_constant", dcmIntegratorTimeConstant);
     }
-    if(config.has("dcm_bias"))
-    {
-      dcmBias.load(config("dcm_bias"));
-    }
-    if(config.has("external_wrench"))
-    {
-      extWrench.load(config("external_wrench"));
-    }
+    if(config.has("dcm_bias")) { dcmBias.load(config("dcm_bias")); }
+    if(config.has("external_wrench")) { extWrench.load(config("external_wrench")); }
     if(config.has("tasks"))
     {
       auto tasks = config("tasks");
@@ -618,10 +650,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
       vdc("stiffness", vdcStiffness);
     }
 
-    if(config.has("zmpcc"))
-    {
-      zmpcc.load(config("zmpcc"));
-    }
+    if(config.has("zmpcc")) { zmpcc.load(config("zmpcc")); }
     config("zmpcc", zmpcc);
   }
 
@@ -632,6 +661,7 @@ struct MC_RBDYN_DLLAPI StabilizerConfiguration
 
     conf.add("safety_tresholds", safetyThresholds);
     conf.add("fdqp_weights", fdqpWeights);
+    conf.add("fdmpc_weights", fdmpcWeights);
 
     conf.add("friction", friction);
     conf.add("leftFootSurface", leftFootSurface);
