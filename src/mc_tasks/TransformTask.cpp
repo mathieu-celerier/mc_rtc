@@ -34,6 +34,9 @@ TransformTask::TransformTask(const mc_rbdyn::RobotFrame & frame, double stiffnes
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::TransformFunction>(frame);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::TransformFunction>(frame);
+      break;
     default:
       mc_rtc::log::error_and_throw("[TransformTask] Not implemented for solver backend: {}", backend_);
   }
@@ -60,6 +63,7 @@ void TransformTask::reset()
       tasks_error(errorT)->target(frame_->position());
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->reset();
       break;
     default:
@@ -139,6 +143,7 @@ sva::PTransformd TransformTask::target() const
     case Backend::Tasks:
       return tasks_error(errorT)->target();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->pose();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -153,6 +158,7 @@ void TransformTask::target(const sva::PTransformd & pose)
       tasks_error(errorT)->target(pose);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->pose(pose);
       break;
     default:

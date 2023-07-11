@@ -636,6 +636,9 @@ set(mc_control_HDR
     ../include/mc_control/mc_python_controller.h
     ../include/mc_control/SimulationContactPair.h
     ../include/mc_control/mc_global_controller.h
+    ../include/mc_control/TasksController.h
+    ../include/mc_control/TVMController.h
+    ../include/mc_control/TVMHierarchicalController.h
 )
 
 add_library(

@@ -44,6 +44,15 @@ PositionBasedVisServoTask::PositionBasedVisServoTask(const std::string & bodyNam
       tvm_error(errorT)->error(X_t_s);
       break;
     }
+    case Backend::TVMHierarchical:
+    {
+      const auto & robot = robots.robot(rIndex);
+      const auto & bodyFrame = robot.frame(bodyName);
+      finalize<Backend::TVMHierarchical, mc_tvm::PositionBasedVisServoFunction>(
+          *robot.makeTemporaryFrame(name_, bodyFrame, X_b_s, true));
+      tvm_error(errorT)->error(X_t_s);
+      break;
+    }
     default:
       mc_rtc::log::error_and_throw("[PBVSTask] Not implemented for solver backend: {}", backend_);
   }
@@ -75,6 +84,10 @@ PositionBasedVisServoTask::PositionBasedVisServoTask(const mc_rbdyn::RobotFrame 
       finalize<Backend::TVM, mc_tvm::PositionBasedVisServoFunction>(frame);
       tvm_error(errorT)->error(X_t_s);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::PositionBasedVisServoFunction>(frame);
+      tvm_error(errorT)->error(X_t_s);
+      break;
     default:
       mc_rtc::log::error_and_throw("[PBVSTask] Not implemented for solver backend: {}", backend_);
   }
@@ -97,6 +110,7 @@ void PositionBasedVisServoTask::error(const sva::PTransformd & X_t_s)
       tasks_error(errorT)->error(X_t_s_);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->error(X_t_s_);
       break;
     default:
@@ -126,6 +140,7 @@ void PositionBasedVisServoTask::addToLogger(mc_rtc::Logger & logger)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto error = tvm_error(errorT);
       logger.addLogEntry(name_ + "_eval", this,

@@ -37,6 +37,7 @@ static mc_rtc::void_ptr make_constraint(QPSolver::Backend backend,
       }
     }
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return {nullptr, nullptr};
     default:
       mc_rtc::log::error_and_throw("[ContactConstr] Not implemented for solver backend: {}", backend);
@@ -57,6 +58,7 @@ void ContactConstraint::addToSolverImpl(QPSolver & solver)
           ->addToSolver(solver.robots().mbs(), tasks_solver(solver).solver());
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       break;
     default:
       break;
@@ -71,6 +73,7 @@ void ContactConstraint::removeFromSolverImpl(QPSolver & solver)
       static_cast<tasks::qp::ContactConstr *>(constraint_.get())->removeFromSolver(tasks_solver(solver).solver());
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       break;
     default:
       break;

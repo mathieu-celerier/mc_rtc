@@ -15,6 +15,14 @@
 
 #include <cmath>
 
+namespace tvm::scheme
+{
+
+class HierarchicalLeastSquares;
+class WeightedLeastSquares;
+
+} // namespace tvm::scheme
+
 namespace mc_control
 {
 struct CompletionCriteria;
@@ -24,7 +32,14 @@ namespace mc_solver
 {
 
 struct TasksQPSolver;
+
+namespace details
+{
+
+template<typename T>
 struct TVMQPSolver;
+
+}
 
 } // namespace mc_solver
 
@@ -40,7 +55,8 @@ struct MC_SOLVER_DLLAPI MetaTask
 {
   friend struct mc_solver::QPSolver;
   friend struct mc_solver::TasksQPSolver;
-  friend struct mc_solver::TVMQPSolver;
+  friend struct mc_solver::details::TVMQPSolver<tvm::scheme::HierarchicalLeastSquares>;
+  friend struct mc_solver::details::TVMQPSolver<tvm::scheme::WeightedLeastSquares>;
   friend struct mc_control::CompletionCriteria;
 
   /** Shortcut for implementation */
@@ -155,6 +171,16 @@ public:
   inline void incrementIterInSolver() noexcept { iterInSolver_++; }
 
   inline Backend backend() const noexcept { return backend_; }
+
+  /** Returns the task priority level (unused when the solver is not hierarchic) */
+  inline int priorityLevel() const noexcept { return priorityLevel_; }
+
+  /** Sets the task priority level (unused when the solver is not hierarchic) */
+  virtual inline void priorityLevel(int prio) noexcept
+  {
+    if(prio < 1) { mc_rtc::log::error_and_throw("[MetaTask] Priority level must be >= 1"); }
+    priorityLevel_ = prio;
+  }
 
 protected:
   /*! \brief Add the task to a solver
@@ -286,6 +312,8 @@ protected:
   std::string name_;
 
   size_t iterInSolver_ = 0;
+
+  int priorityLevel_ = 1;
 };
 
 using MetaTaskPtr = std::shared_ptr<MetaTask>;

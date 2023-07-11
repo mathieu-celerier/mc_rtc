@@ -29,6 +29,7 @@ void MetaTask::load(mc_solver::QPSolver & solver, const mc_rtc::Configuration & 
   if(config.has("activeJoints")) { selectActiveJoints(solver, config("activeJoints")); }
   else if(config.has("unactiveJoints")) { selectUnactiveJoints(solver, config("unactiveJoints")); }
   if(config.has("name")) { name(config("name")); }
+  if(config.has("priorityLevel")) { priorityLevel(config("priorityLevel")); }
 }
 
 void MetaTask::addToGUI(mc_rtc::gui::StateBuilder & gui)

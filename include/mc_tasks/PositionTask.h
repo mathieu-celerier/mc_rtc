@@ -62,6 +62,7 @@ public:
       case Backend::Tasks:
         return static_cast<tasks::qp::PositionTask *>(errorT.get())->position();
       case Backend::TVM:
+      case Backend::TVMHierarchical:
         return static_cast<mc_tvm::PositionFunction *>(errorT.get())->position();
       default:
         mc_rtc::log::error_and_throw("Not implemented");
@@ -81,6 +82,7 @@ public:
         static_cast<tasks::qp::PositionTask *>(errorT.get())->position(pos);
         break;
       case Backend::TVM:
+      case Backend::TVMHierarchical:
         static_cast<mc_tvm::PositionFunction *>(errorT.get())->position(pos);
         break;
       default:
@@ -97,6 +99,7 @@ public:
       case Backend::Tasks:
         return static_cast<tasks::qp::PositionTask *>(errorT.get())->bodyPoint();
       case Backend::TVM:
+      case Backend::TVMHierarchical:
       {
         static Eigen::Vector3d res = Eigen::Vector3d::Zero();
         return res;

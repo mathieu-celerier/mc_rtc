@@ -29,6 +29,9 @@ CoMTask::CoMTask(const mc_rbdyn::Robots & robots, unsigned int robotIndex, doubl
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::CoMFunction>(robot);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::CoMFunction>(robot);
+      break;
     default:
       mc_rtc::log::error_and_throw("[CoMTask] Not implemented for solver backend: {}", backend_);
   }
@@ -80,6 +83,7 @@ void CoMTask::com(const Eigen::Vector3d & com)
       tasks_error(errorT)->com(com);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->com(com);
       break;
     default:
@@ -94,6 +98,7 @@ const Eigen::Vector3d & CoMTask::com() const
     case Backend::Tasks:
       return tasks_error(errorT)->com();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->com();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -107,6 +112,7 @@ const Eigen::Vector3d & CoMTask::actual() const
     case Backend::Tasks:
       return tasks_error(errorT)->actual();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->actual();
     default:
       mc_rtc::log::error_and_throw("Not implemented");

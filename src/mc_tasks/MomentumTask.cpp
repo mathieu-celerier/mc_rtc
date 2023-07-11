@@ -35,6 +35,9 @@ MomentumTask::MomentumTask(const mc_rbdyn::Robots & robots, unsigned int robotIn
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::MomentumFunction>(robot);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::MomentumFunction>(robot);
+      break;
     default:
       mc_rtc::log::error_and_throw("[MomentumTask] Not implemented for solver backend: {}", backend_);
   }
@@ -63,6 +66,7 @@ sva::ForceVecd MomentumTask::momentum() const
     case Backend::Tasks:
       return tasks_error(errorT)->momentum();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->momentum();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -77,6 +81,7 @@ void MomentumTask::momentum(const sva::ForceVecd & m)
       tasks_error(errorT)->momentum(m);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->momentum(m);
       break;
     default:
@@ -96,6 +101,7 @@ void MomentumTask::addToLogger(mc_rtc::Logger & logger)
                          [this]() { return sva::ForceVecd(momentum().vector() - tasks_error(errorT)->eval()); });
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       logger.addLogEntry(name_ + "_momentum", this,
                          [this]() -> const sva::ForceVecd & { return tvm_error(errorT)->algo().momentum(); });
       break;
@@ -123,6 +129,7 @@ void MomentumTask::addToGUI(mc_rtc::gui::StateBuilder & gui)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       gui.addElement({"Tasks", name_}, mc_rtc::gui::ArrayLabel("momentum", {"cx", "cy", "cz", "fx", "fy", "fz"},
                                                                [this]() -> const sva::ForceVecd &

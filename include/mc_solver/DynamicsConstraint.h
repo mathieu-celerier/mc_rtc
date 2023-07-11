@@ -66,7 +66,7 @@ public:
    */
   inline mc_tvm::DynamicFunction & dynamicFunction()
   {
-    assert(backend_ == QPSolver::Backend::TVM);
+    assert(backend_ == QPSolver::Backend::TVM || backend_ == QPSolver::Backend::TVMHierarchical);
     return *(static_cast<mc_tvm::DynamicFunctionPtr *>(motion_constr_.get())->get());
   }
 

@@ -42,6 +42,7 @@ static inline void set_gains(MetaTask::Backend backend,
       tasks_trajectory(traj)->setGains(s, d);
       break;
     case MetaTask::Backend::TVM:
+    case MetaTask::Backend::TVMHierarchical:
     {
       auto trajectory = tvm_trajectory(traj);
       if(trajectory->task_)
@@ -89,9 +90,10 @@ void TrajectoryTaskGeneric::removeFromSolver(mc_solver::QPSolver & solver)
         tasks_solver(solver).removeTask(tasks_trajectory(trajectoryT_));
         break;
       case Backend::TVM:
+      case Backend::TVMHierarchical:
       {
         auto trajectory = tvm_trajectory(trajectoryT_);
-        tvm_solver(solver).problem().remove(*trajectory->task_);
+        tvm_problem(solver).remove(*trajectory->task_);
         trajectory->task_.reset();
         break;
       }
@@ -112,26 +114,26 @@ void TrajectoryTaskGeneric::addToSolver(mc_solver::QPSolver & solver)
         tasks_solver(solver).addTask(tasks_trajectory(trajectoryT_));
         break;
       case Backend::TVM:
+      case Backend::TVMHierarchical:
       {
         auto addTask = [&, this](auto & error)
         {
           auto trajectory = tvm_trajectory(trajectoryT_);
-          tvm::requirements::SolvingRequirements reqs{tvm::requirements::PriorityLevel(1),
-                                                      tvm::requirements::Weight(weight_),
-                                                      tvm::requirements::AnisotropicWeight(trajectory->dimWeight_)};
+          tvm::requirements::SolvingRequirements reqs{
+              tvm::requirements::PriorityLevel(backend_ == Backend::TVMHierarchical ? priorityLevel_ : 1),
+              tvm::requirements::Weight(weight_), tvm::requirements::AnisotropicWeight(trajectory->dimWeight_)};
           tvm::FunctionPtr error_ptr(&error, [](tvm::function::abstract::Function *) {});
           if(error.variables()[0]->derivativeNumber() == 0)
           {
             trajectory->dynamicIsPD_ = true;
             trajectory->task_ =
-                tvm_solver(solver).problem().add(error_ptr == 0., tvm::task_dynamics::PD(stiffness_, damping_), reqs);
+                tvm_problem(solver).add(error_ptr == 0., tvm::task_dynamics::PD(stiffness_, damping_), reqs);
           }
           else
           {
             assert(error.variables()[0]->derivativeNumber() == 1);
             trajectory->dynamicIsPD_ = false;
-            trajectory->task_ =
-                tvm_solver(solver).problem().add(error_ptr == 0., tvm::task_dynamics::P(stiffness_), reqs);
+            trajectory->task_ = tvm_problem(solver).add(error_ptr == 0., tvm::task_dynamics::P(stiffness_), reqs);
           }
         };
         if(selectorT_) { addTask(*tvm_selector(selectorT_)); }
@@ -153,6 +155,7 @@ void TrajectoryTaskGeneric::reset()
       case Backend::Tasks:
         return tasks_error(errorT)->dim();
       case Backend::TVM:
+      case Backend::TVMHierarchical:
         return tvm_error(errorT)->size();
       default:
         return 0;
@@ -172,6 +175,7 @@ void TrajectoryTaskGeneric::refVel(const Eigen::VectorXd & vel)
       tasks_trajectory(trajectoryT_)->refVel(vel);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto trajectory = tvm_trajectory(trajectoryT_);
       if(trajectory->setRefVel) { trajectory->setRefVel(errorT.get(), vel); }
@@ -196,6 +200,7 @@ void TrajectoryTaskGeneric::refAccel(const Eigen::VectorXd & accel)
       tasks_trajectory(trajectoryT_)->refAccel(accel);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto trajectory = tvm_trajectory(trajectoryT_);
       if(trajectory->setRefAccel) { trajectory->setRefAccel(errorT.get(), accel); }
@@ -277,6 +282,7 @@ void TrajectoryTaskGeneric::weight(double w)
       tasks_trajectory(trajectoryT_)->weight(w);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto trajectory = tvm_trajectory(trajectoryT_);
       if(trajectory->task_) { trajectory->task_->requirements.weight() = weight_; }
@@ -300,6 +306,7 @@ void TrajectoryTaskGeneric::dimWeight(const Eigen::VectorXd & w)
       tasks_trajectory(trajectoryT_)->dimWeight(w);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto traj = tvm_trajectory(trajectoryT_);
       if(traj->dimWeight_.size() != w.size())
@@ -323,6 +330,7 @@ Eigen::VectorXd TrajectoryTaskGeneric::dimWeight() const
     case Backend::Tasks:
       return tasks_trajectory(trajectoryT_)->dimWeight();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_trajectory(trajectoryT_)->dimWeight_;
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -352,6 +360,7 @@ void TrajectoryTaskGeneric::selectActiveJoints(const std::vector<std::string> & 
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       selectorT_ = mc_rtc::make_void_ptr(
           mc_tvm::JointsSelectorFunction::ActiveJoints(tvm_error(errorT), robots.robot(rIndex), activeJointsName));
       break;
@@ -403,6 +412,7 @@ void TrajectoryTaskGeneric::selectUnactiveJoints(
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       selectorT_ = mc_rtc::make_void_ptr(
           mc_tvm::JointsSelectorFunction::InactiveJoints(tvm_error(errorT), robots.robot(rIndex), unactiveJointsName));
       break;
@@ -446,6 +456,7 @@ void TrajectoryTaskGeneric::resetJointsSelector()
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       break;
     default:
       break;
@@ -474,6 +485,7 @@ Eigen::VectorXd TrajectoryTaskGeneric::eval() const
       return tasks_error(errorT)->eval().cwiseProduct(dimWeight);
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       const auto & dimWeight = tvm_trajectory(trajectoryT_)->dimWeight_;
       if(selectorT_) { return tvm_selector(selectorT_)->value().cwiseProduct(dimWeight); }
@@ -495,6 +507,7 @@ Eigen::VectorXd TrajectoryTaskGeneric::speed() const
       return tasks_error(errorT)->speed().cwiseProduct(dimWeight);
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       const auto & dimWeight = tvm_trajectory(trajectoryT_)->dimWeight_;
       if(selectorT_) { return tvm_selector(selectorT_)->velocity().cwiseProduct(dimWeight); }
@@ -515,6 +528,7 @@ const Eigen::VectorXd & TrajectoryTaskGeneric::normalAcc() const
       return tasks_error(errorT)->normalAcc();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       if(selectorT_) { return tvm_selector(selectorT_)->normalAcceleration(); }
       return tvm_error(errorT)->normalAcceleration();

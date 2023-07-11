@@ -30,6 +30,9 @@ PositionTask::PositionTask(const mc_rbdyn::RobotFrame & frame, double stiffness,
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::PositionFunction>(frame);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::PositionFunction>(frame);
+      break;
     default:
       mc_rtc::log::error_and_throw("[PositionTask] Not implemented for backend: {}", backend_);
   }

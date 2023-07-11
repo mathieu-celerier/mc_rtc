@@ -35,6 +35,9 @@ OrientationTask::OrientationTask(const mc_rbdyn::RobotFrame & frame, double stif
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::OrientationFunction>(frame);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::OrientationFunction>(frame);
+      break;
     default:
       mc_rtc::log::error_and_throw("[OrientationTask] Not implemented for backend: {}", backend_);
   }
@@ -51,6 +54,7 @@ void OrientationTask::reset()
       orientation((frame_->X_b_f().inv() * frame_->position()).rotation());
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       orientation(frame_->position().rotation());
       break;
     default:
@@ -66,6 +70,7 @@ void OrientationTask::orientation(const Eigen::Matrix3d & ori)
       tasks_error(errorT)->orientation((frame_->X_b_f().inv() * sva::PTransformd{ori}).rotation());
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->orientation(ori);
       break;
     default:
@@ -80,6 +85,7 @@ Eigen::Matrix3d OrientationTask::orientation()
     case Backend::Tasks:
       return (frame_->X_b_f() * tasks_error(errorT)->orientation()).rotation();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->orientation();
     default:
       mc_rtc::log::error_and_throw("Not implemented");

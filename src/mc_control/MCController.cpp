@@ -110,6 +110,8 @@ static inline std::shared_ptr<mc_solver::QPSolver> make_solver(double dt, MCCont
       return std::make_shared<mc_solver::TasksQPSolver>(dt);
     case MCController::Backend::TVM:
       return std::make_shared<mc_solver::TVMQPSolver>(dt);
+    case MCController::Backend::TVMHierarchical:
+      return std::make_shared<mc_solver::TVMHQPSolver>(dt);
     default:
       mc_rtc::log::error_and_throw("[MCController] Backend {} is not fully supported yet", backend);
   }
