@@ -127,8 +127,10 @@ jobs:
           - path: jrl-umi3218/mc_rtc_data
           - path: jrl-umi3218/eigen-quadprog
           - path: jrl-umi3218/state-observation
+          - path: jrl-umi3218/lexls
+            options: -DINSTALL_PDF_DOCUMENTATION:BOOL=OFF -DINSTALL_HTML_DOCUMENTATION:BOOL=OFF
           - path: jrl-umi3218/tvm
-            options: -DTVM_WITH_ROBOT:BOOL=OFF
+            options: -DTVM_WITH_LEXLS:BOOL=ON -DTVM_WITH_ROBOT:BOOL=OFF
     - name: Build and test
       if: matrix.build-type == 'RelWithDebInfo' || (matrix.build-type == 'Debug' && github.ref == 'refs/heads/master')
       uses: jrl-umi3218/github-actions/build-cmake-project@master
