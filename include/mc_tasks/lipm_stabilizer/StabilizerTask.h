@@ -125,6 +125,16 @@ struct MC_TASKS_DLLAPI StabilizerTask : public MetaTask
     torsoTask->name(n + "_torso");
   }
 
+  inline void priorityLevel(int prio) noexcept override
+  {
+    MetaTask::priorityLevel(prio);
+    comTask->priorityLevel(prio);
+    footTasks.at(ContactState::Left)->priorityLevel(prio);
+    footTasks.at(ContactState::Right)->priorityLevel(prio);
+    pelvisTask->priorityLevel(prio);
+    torsoTask->priorityLevel(prio);
+  }
+
   using MetaTask::name;
 
   /**

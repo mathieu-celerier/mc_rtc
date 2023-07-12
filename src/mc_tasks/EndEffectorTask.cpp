@@ -229,4 +229,11 @@ void EndEffectorTask::name(const std::string & name)
   orientationTask->name(name + "_orientation");
 }
 
+void EndEffectorTask::priorityLevel(int prio) noexcept
+{
+  MetaTask::priorityLevel(prio);
+  positionTask->priorityLevel(prio);
+  orientationTask->priorityLevel(prio);
+}
+
 } // namespace mc_tasks

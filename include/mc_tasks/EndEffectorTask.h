@@ -99,6 +99,8 @@ public:
 
   void name(const std::string & name) override;
 
+  void priorityLevel(int prio) noexcept override;
+
 public:
   std::shared_ptr<mc_tasks::PositionTask> positionTask;
   std::shared_ptr<mc_tasks::OrientationTask> orientationTask;
