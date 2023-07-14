@@ -120,7 +120,9 @@ private:
 
 using Controller = mc_control::TestCoMTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestCoMTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestCoMTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestCoMTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestCoMTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestCoMTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

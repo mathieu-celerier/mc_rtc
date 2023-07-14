@@ -134,7 +134,9 @@ private:
 
 using Controller = mc_control::TestOrientationTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestOrientationTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestOrientationTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestOrientationTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestOrientationTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestOrientationTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

@@ -160,16 +160,17 @@ macro(controller_test_run NAME NRITER)
     add_global_controller_test_run(${VARIANT} ${CONFIG_OUT} ${ACTUALITER} "")
   endmacro()
   setup_test_run(${NAME})
-  set(VARIANT "${NAME}_TVM")
   set(OLD_TEST_CONTROLLER_NAME "${TEST_CONTROLLER_NAME}")
   set(OLD_LOG_ENABLED "${LOG_ENABLED}")
-  set(TEST_CONTROLLER_NAME "${VARIANT}")
-  set(LOG_ENABLED "false")
-  configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/mc_rtc.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/mc_rtc-${VARIANT}.cmake.conf
-  )
-  setup_test_run(${VARIANT})
+  foreach(VARIANT ${NAME}_TVM ${NAME}_TVMHierarchical)
+    set(TEST_CONTROLLER_NAME "${VARIANT}")
+    set(LOG_ENABLED "false")
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/mc_rtc.conf.in
+      ${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/mc_rtc-${VARIANT}.cmake.conf
+    )
+    setup_test_run(${VARIANT})
+  endforeach()
   set(TEST_CONTROLLER_NAME "${OLD_TEST_CONTROLLER_NAME}")
   set(LOG_ENABLED "${OLD_LOG_ENABLED}")
 endmacro()
@@ -384,6 +385,11 @@ macro(controller_sample_test_run NAME PATH_SUFFIX NRITER)
     set(TEST_CONTROLLER_PATH
         "${PROJECT_BINARY_DIR}/src/mc_control/samples/${ACTUAL_NAME}${PATH_SUFFIX}"
     )
+  elseif("${NAME}" MATCHES "_TVMHierarchical$")
+    string(REGEX REPLACE "_TVMHierarchical$" "" ACTUAL_NAME "${NAME}")
+    set(TEST_CONTROLLER_PATH
+        "${PROJECT_BINARY_DIR}/src/mc_control/samples/${ACTUAL_NAME}${PATH_SUFFIX}"
+    )
   else()
     set(TEST_CONTROLLER_PATH
         "${PROJECT_BINARY_DIR}/src/mc_control/samples/${NAME}${PATH_SUFFIX}"
@@ -439,6 +445,10 @@ controller_sample_test_run(CoM_TVM "" 1000)
 controller_sample_test_run(EndEffector_TVM "" 1000)
 controller_sample_test_run(Posture_TVM "" 1000)
 
+controller_sample_test_run(CoM_TVMHierarchical "" 1000)
+controller_sample_test_run(EndEffector_TVMHierarchical "" 1000)
+controller_sample_test_run(Posture_TVMHierarchical "" 1000)
+
 controller_sample_test_run(Text "" 1000)
 file(
   GENERATE
@@ -449,6 +459,12 @@ controller_sample_test_run(Text_TVM "" 1000)
 file(
   GENERATE
   OUTPUT "${TEST_CONTROLLER_PATH}/etc/Text_TVM.conf"
+  INPUT "${PROJECT_SOURCE_DIR}/src/mc_control/samples/Text/etc/Text.conf"
+)
+controller_sample_test_run(Text_TVMHierarchical "" 1000)
+file(
+  GENERATE
+  OUTPUT "${TEST_CONTROLLER_PATH}/etc/Text_TVMHierarchical.conf"
   INPUT "${PROJECT_SOURCE_DIR}/src/mc_control/samples/Text/etc/Text.conf"
 )
 
@@ -479,6 +495,12 @@ controller_sample_test_run(FSM_TVM "/src" 8000)
 file(
   GENERATE
   OUTPUT "${TEST_CONTROLLER_PATH}/etc/FSM_TVM.conf"
+  INPUT "${CMAKE_CURRENT_BINARY_DIR}/etc/FSM.conf"
+)
+controller_sample_test_run(FSM_TVMHierarchical "/src" 8000)
+file(
+  GENERATE
+  OUTPUT "${TEST_CONTROLLER_PATH}/etc/FSM_TVMHierarchical.conf"
   INPUT "${CMAKE_CURRENT_BINARY_DIR}/etc/FSM.conf"
 )
 unset(AROBASE)
@@ -512,6 +534,12 @@ controller_sample_test_run(LIPMStabilizer_TVM "/src" 1000)
 file(
   GENERATE
   OUTPUT "${TEST_CONTROLLER_PATH}/etc/LIPMStabilizer_TVM.yaml"
+  INPUT "${CMAKE_CURRENT_BINARY_DIR}/etc/LIPMStabilizer.yaml"
+)
+controller_sample_test_run(LIPMStabilizer_TVMHierarchical "/src" 1000)
+file(
+  GENERATE
+  OUTPUT "${TEST_CONTROLLER_PATH}/etc/LIPMStabilizer_TVMHierarchical.yaml"
   INPUT "${CMAKE_CURRENT_BINARY_DIR}/etc/LIPMStabilizer.yaml"
 )
 unset(AROBASE)
@@ -774,6 +802,7 @@ if(PYTHON_BINDING AND NOT APPLE)
     endmacro()
     setup_test_python_state("")
     setup_test_python_state("_TVM")
+    setup_test_python_state("_TVMHierarchical")
   endforeach()
   unset(OBSERVER_PIPELINES)
 endif()

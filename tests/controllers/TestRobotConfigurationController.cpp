@@ -80,7 +80,9 @@ private:
 
 using Controller = mc_control::TestRobotConfigurationControllerController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestRobotConfigurationController",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "TestRobotConfigurationController_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestRobotConfigurationController",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "TestRobotConfigurationController_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "TestRobotConfigurationController_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))

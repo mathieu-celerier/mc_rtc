@@ -88,7 +88,9 @@ private:
 
 using Controller = mc_control::TestPythonStateController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestPythonState",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "TestPythonState_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestPythonState",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "TestPythonState_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "TestPythonState_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))

@@ -50,7 +50,10 @@ void MCTextController::reset(const mc_control::ControllerResetData & data)
 
 } // namespace mc_control
 
-MULTI_CONTROLLERS_CONSTRUCTOR("Text",
-                              mc_control::MCTextController(rm, dt, config, mc_control::MCController::Backend::Tasks),
-                              "Text_TVM",
-                              mc_control::MCTextController(rm, dt, config, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR(
+    "Text",
+    mc_control::MCTextController(rm, dt, config, mc_control::MCController::Backend::Tasks),
+    "Text_TVM",
+    mc_control::MCTextController(rm, dt, config, mc_control::MCController::Backend::TVM),
+    "Text_TVMHierarchical",
+    mc_control::MCTextController(rm, dt, config, mc_control::MCController::Backend::TVMHierarchical))

@@ -88,7 +88,9 @@ private:
 
 using Controller = mc_control::TestMomentumTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestMomentumTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestMomentumTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestMomentumTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestMomentumTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestMomentumTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

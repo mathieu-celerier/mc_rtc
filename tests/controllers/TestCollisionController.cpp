@@ -163,7 +163,9 @@ private:
 
 using Controller = mc_control::TestCollisionController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestCollisionController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestCollisionController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestCollisionController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestCollisionController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestCollisionController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

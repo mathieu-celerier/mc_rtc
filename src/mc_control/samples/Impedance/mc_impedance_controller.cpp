@@ -110,7 +110,11 @@ void MCImpedanceController::stop()
 
 } // namespace mc_control
 
-MULTI_CONTROLLERS_CONSTRUCTOR("Impedance",
-                              mc_control::MCImpedanceController(rm, dt, mc_control::MCController::Backend::Tasks),
-                              "Impedance_TVM",
-                              mc_control::MCImpedanceController(rm, dt, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("Impedance",
+                               mc_control::MCImpedanceController(rm, dt, mc_control::MCController::Backend::Tasks),
+                               "Impedance_TVM",
+                               mc_control::MCImpedanceController(rm, dt, mc_control::MCController::Backend::TVM),
+                               "Impedance_TVMHierarchical",
+                               mc_control::MCImpedanceController(rm,
+                                                                 dt,
+                                                                 mc_control::MCController::Backend::TVMHierarchical))

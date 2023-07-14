@@ -4,7 +4,10 @@
 
 #include "mc_lipm_stabilizer.h"
 
-MULTI_CONTROLLERS_CONSTRUCTOR("LIPMStabilizer",
-                              LIPMStabilizerController(rm, dt, config, mc_control::MCController::Backend::Tasks),
-                              "LIPMStabilizer_TVM",
-                              LIPMStabilizerController(rm, dt, config, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR(
+    "LIPMStabilizer",
+    LIPMStabilizerController(rm, dt, config, mc_control::MCController::Backend::Tasks),
+    "LIPMStabilizer_TVM",
+    LIPMStabilizerController(rm, dt, config, mc_control::MCController::Backend::TVM),
+    "LIPMStabilizer_TVMHierarchical",
+    LIPMStabilizerController(rm, dt, config, mc_control::MCController::Backend::TVMHierarchical))

@@ -161,7 +161,9 @@ private:
 
 using Controller = mc_control::TestCoMInBoxController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestCoMInBoxController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestCoMInBoxController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestCoMInBoxController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestCoMInBoxController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestCoMInBoxController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

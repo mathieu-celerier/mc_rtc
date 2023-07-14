@@ -43,7 +43,9 @@ public:
 
 using Controller = mc_control::TestFSMMetaContinuityController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestFSMMetaContinuity",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "TestFSMMetaContinuity_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestFSMMetaContinuity",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "TestFSMMetaContinuity_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "TestFSMMetaContinuity_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))

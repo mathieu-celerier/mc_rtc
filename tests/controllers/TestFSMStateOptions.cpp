@@ -140,7 +140,9 @@ private:
 
 using Controller = mc_control::TestFSMStateOptionsController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestFSMStateOptions",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "TestFSMStateOptions_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestFSMStateOptions",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "TestFSMStateOptions_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "TestFSMStateOptions_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))

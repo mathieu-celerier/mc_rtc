@@ -72,7 +72,9 @@ void MCEndEffectorController::reset(const ControllerResetData & reset_data)
 using Controller = mc_control::MCEndEffectorController;
 using Backend = Controller::Backend;
 
-MULTI_CONTROLLERS_CONSTRUCTOR("EndEffector",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "EndEffector_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("EndEffector",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "EndEffector_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "EndEffector_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))
