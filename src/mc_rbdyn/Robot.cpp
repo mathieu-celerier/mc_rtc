@@ -1169,11 +1169,23 @@ unsigned int mc_rbdyn::Robot::robotIndex() const
 
 void Robot::forwardKinematics()
 {
-  rbd::forwardKinematics(mb(), mbc());
+  forwardKinematics(mbc());
 }
 void Robot::forwardKinematics(rbd::MultiBodyConfig & mbc) const
 {
   rbd::forwardKinematics(mb(), mbc);
+
+  for(const auto & cvx : convexes_)
+  {
+    auto get_cvx_tf = [&]()
+    {
+      unsigned int index = static_cast<unsigned int>(mb().bodyIndexByName(cvx.second.first));
+      auto tfs_it = collisionTransforms_.find(cvx.first);
+      if(tfs_it != collisionTransforms_.end()) { return tfs_it->second * mbc.bodyPosW[index]; }
+      return mbc.bodyPosW[index];
+    };
+    sch::mc_rbdyn::transform(*cvx.second.second, get_cvx_tf());
+  }
 }
 
 void Robot::forwardVelocity()
