@@ -83,7 +83,9 @@ private:
 
 using Controller = mc_control::TestPBVSTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestPBVSTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestPBVSTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestPBVSTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestPBVSTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestPBVSTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

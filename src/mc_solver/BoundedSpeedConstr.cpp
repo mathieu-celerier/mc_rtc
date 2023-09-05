@@ -49,18 +49,30 @@ struct TVMBoundedSpeedConstr
                         });
   }
 
-  void addBoundedSpeed(TVMQPSolver * solver,
+  template<typename SolverT>
+  void addBoundedSpeed(SolverT * solver,
                        const mc_rbdyn::RobotFrame & frame,
-                       const Eigen::Vector6d & dof,
+                       const Eigen::MatrixXd & dof,
                        const Eigen::Vector6d & lowerSpeed,
                        const Eigen::Vector6d & upperSpeed)
   {
+    if(lowerSpeed.size() != 6 || upperSpeed.size() != 6)
+    {
+      mc_rtc::log::error_and_throw("[BoundedSpeedConstr] In TVM backend you have to specify the 6D speed but "
+                                   "lowerSpeed size ({}) or upperSpeed size ({}) is wrong",
+                                   lowerSpeed.size(), upperSpeed.size());
+    }
+    if(dof.rows() != 6 || dof.cols() != 6)
+    {
+      mc_rtc::log::error_and_throw("[BoundedSpeedConstr] In TVM backend, dof must be a 6x6 matrix but got {}x{}",
+                                   dof.rows(), dof.cols());
+    }
     auto it = getData(frame);
     if(it != data_.end())
     {
       it->lowerSpeed = lowerSpeed;
       it->upperSpeed = upperSpeed;
-      it->fn->dof(dof);
+      it->fn->dof(dof.diagonal());
       if(solver)
       {
         removeBoundedSpeed(*solver, *it);
@@ -69,12 +81,13 @@ struct TVMBoundedSpeedConstr
     }
     else
     {
-      data_.push_back({std::make_shared<mc_tvm::FrameVelocity>(frame, dof), lowerSpeed, upperSpeed});
+      data_.push_back({std::make_shared<mc_tvm::FrameVelocity>(frame, dof.diagonal()), lowerSpeed, upperSpeed});
       if(solver) { addBoundedSpeed(*solver, data_.back()); }
     }
   }
 
-  bool removeBoundedSpeed(TVMQPSolver * solver, const std::string & frame)
+  template<typename SolverT>
+  bool removeBoundedSpeed(SolverT * solver, const std::string & frame)
   {
     bool r = false;
     for(auto it = data_.begin(); it != data_.end();)
@@ -90,24 +103,28 @@ struct TVMBoundedSpeedConstr
     return r;
   }
 
-  void addToSolver(TVMQPSolver & solver)
+  template<typename SolverT>
+  void addToSolver(SolverT & solver)
   {
     for(auto & d : data_) { addBoundedSpeed(solver, d); }
   }
 
-  void removeFromSolver(TVMQPSolver & solver)
+  template<typename SolverT>
+  void removeFromSolver(SolverT & solver)
   {
     for(auto & d : data_) { removeBoundedSpeed(solver, d); }
   }
 
-  void reset(TVMQPSolver * solver)
+  template<typename SolverT>
+  void reset(SolverT * solver)
   {
     if(solver) { removeFromSolver(*solver); }
     data_.clear();
   }
 
 private:
-  void addBoundedSpeed(TVMQPSolver & solver, BoundedSpeedData & data)
+  template<typename SolverT>
+  void addBoundedSpeed(SolverT & solver, BoundedSpeedData & data)
   {
     auto lower = data.fn->dof().cwiseProduct(data.lowerSpeed);
     auto upper = data.fn->dof().cwiseProduct(data.upperSpeed);
@@ -115,7 +132,8 @@ private:
                                      {tvm::requirements::PriorityLevel(0)});
   }
 
-  void removeBoundedSpeed(TVMQPSolver & solver, BoundedSpeedData & data)
+  template<typename SolverT>
+  void removeBoundedSpeed(SolverT & solver, BoundedSpeedData & data)
   {
     solver.problem().remove(*data.task);
     data.task.reset();
@@ -138,6 +156,7 @@ static mc_rtc::void_ptr make_constraint(QPSolver::Backend backend,
     case QPSolver::Backend::Tasks:
       return mc_rtc::make_void_ptr<tasks::qp::BoundedSpeedConstr>(robots.mbs(), static_cast<int>(robotIndex), dt);
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return mc_rtc::make_void_ptr<details::TVMBoundedSpeedConstr>();
     default:
       mc_rtc::log::error_and_throw("[BoundedSpeedConstr] Not implemented for solver backend: {}", backend);
@@ -162,6 +181,9 @@ void BoundedSpeedConstr::addToSolverImpl(QPSolver & solver)
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->addToSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)->addToSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -177,6 +199,9 @@ void BoundedSpeedConstr::removeFromSolverImpl(QPSolver & solver)
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->removeFromSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)->removeFromSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -189,6 +214,7 @@ size_t BoundedSpeedConstr::nrBoundedSpeeds() const
     case QPSolver::Backend::Tasks:
       return tasks_constraint(constraint_)->nrBoundedSpeeds();
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return tvm_constraint(constraint_)->data_.size();
     default:
       return 0;
@@ -217,6 +243,7 @@ void BoundedSpeedConstr::addBoundedSpeed(QPSolver & solver,
         break;
       }
       case QPSolver::Backend::TVM:
+      case QPSolver::Backend::TVMHierarchical:
       {
         addBoundedSpeed(solver,
                         *robot.makeTemporaryFrame(fmt::format("BoundedSpeedTempFrame_{}", bodyName),
@@ -262,19 +289,14 @@ void BoundedSpeedConstr::addBoundedSpeed(QPSolver & solver,
     }
     case QPSolver::Backend::TVM:
     {
-      if(lowerSpeed.size() != 6 || upperSpeed.size() != 6)
-      {
-        mc_rtc::log::error_and_throw("[BoundedSpeedConstr] In TVM backend you have to specify the 6D speed but "
-                                     "lowerSpeed size ({}) or upperSpeed size ({}) is wrong",
-                                     lowerSpeed.size(), upperSpeed.size());
-      }
-      if(dof.rows() != 6 || dof.cols() != 6)
-      {
-        mc_rtc::log::error_and_throw("[BoundedSpeedConstr] In TVM backend, dof must be a 6x6 matrix but got {}x{}",
-                                     dof.rows(), dof.cols());
-      }
       tvm_constraint(constraint_)
-          ->addBoundedSpeed(inSolver_ ? &tvm_solver(solver) : nullptr, frame, dof.diagonal(), lowerSpeed, upperSpeed);
+          ->addBoundedSpeed(inSolver_ ? &tvm_solver(solver) : nullptr, frame, dof, lowerSpeed, upperSpeed);
+      break;
+    }
+    case QPSolver::Backend::TVMHierarchical:
+    {
+      tvm_constraint(constraint_)
+          ->addBoundedSpeed(inSolver_ ? &tvm_hsolver(solver) : nullptr, frame, dof, lowerSpeed, upperSpeed);
       break;
     }
     default:
@@ -284,7 +306,6 @@ void BoundedSpeedConstr::addBoundedSpeed(QPSolver & solver,
 
 bool BoundedSpeedConstr::removeBoundedSpeed(QPSolver & solver, const std::string & frameName)
 {
-  bool r = false;
   if(solver.robots().robot(robotIndex).hasFrame(frameName))
   {
     switch(backend_)
@@ -293,25 +314,22 @@ bool BoundedSpeedConstr::removeBoundedSpeed(QPSolver & solver, const std::string
       {
         auto & constr = *tasks_constraint(constraint_);
         auto & qpsolver = tasks_solver(solver);
-        r = constr.removeBoundedSpeed(solver.robots().robot(robotIndex).frame(frameName).body());
+        bool r = constr.removeBoundedSpeed(solver.robots().robot(robotIndex).frame(frameName).body());
         constr.updateBoundedSpeeds();
         qpsolver.updateConstrSize();
-        break;
+        return r;
       }
       case QPSolver::Backend::TVM:
-      {
         return tvm_constraint(constraint_)->removeBoundedSpeed(inSolver_ ? &tvm_solver(solver) : nullptr, frameName);
-      }
+      case QPSolver::Backend::TVMHierarchical:
+        return tvm_constraint(constraint_)->removeBoundedSpeed(inSolver_ ? &tvm_hsolver(solver) : nullptr, frameName);
       default:
         break;
     }
   }
-  else
-  {
-    mc_rtc::log::error("Could not remove bounded speed constraint for frame {} since it does not exist in robot {}",
-                       frameName, solver.robots().robot(robotIndex).name());
-  }
-  return r;
+  mc_rtc::log::error("Could not remove bounded speed constraint for frame {} since it does not exist in robot {}",
+                     frameName, solver.robots().robot(robotIndex).name());
+  return false;
 }
 
 void BoundedSpeedConstr::reset(QPSolver & solver)
@@ -329,6 +347,9 @@ void BoundedSpeedConstr::reset(QPSolver & solver)
     }
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->reset(inSolver_ ? &tvm_solver(solver) : nullptr);
+      break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)->reset(inSolver_ ? &tvm_hsolver(solver) : nullptr);
       break;
     default:
       break;

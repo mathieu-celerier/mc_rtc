@@ -13,10 +13,15 @@
 
 #include <mc_rtc/gui/Force.h>
 
+#include <tvm/solver/LexLSHierarchicalLeastSquareSolver.h>
 #include <tvm/solver/defaultLeastSquareSolver.h>
+
 #include <tvm/task_dynamics/ProportionalDerivative.h>
 
 namespace mc_solver
+{
+
+namespace details
 {
 
 inline static Eigen::MatrixXd discretizedFrictionCone(double muI)
@@ -28,14 +33,45 @@ inline static Eigen::MatrixXd discretizedFrictionCone(double muI)
   return C;
 }
 
-TVMQPSolver::TVMQPSolver(mc_rbdyn::RobotsPtr robots, double dt)
-: QPSolver(robots, dt, Backend::TVM), solver_(tvm::solver::DefaultLSSolverOptions{})
+template<typename SchemeT>
+inline auto default_solver_options()
+{
+  if constexpr(std::is_same_v<SchemeT, tvm::scheme::WeightedLeastSquares>)
+  {
+    return tvm::solver::DefaultLSSolverOptions{};
+  }
+  else if constexpr(std::is_same_v<SchemeT, tvm::scheme::HierarchicalLeastSquares>)
+  {
+    return tvm::solver::LexLSHLSSolverOptions{};
+  }
+  else { static_assert(!std::is_same_v<SchemeT, SchemeT>, "This must be specialized"); }
+}
+
+template<typename SchemeT>
+inline auto backend_from_scheme()
+{
+  if constexpr(std::is_same_v<SchemeT, tvm::scheme::WeightedLeastSquares>) { return QPSolver::Backend::TVM; }
+  else if constexpr(std::is_same_v<SchemeT, tvm::scheme::HierarchicalLeastSquares>)
+  {
+    return QPSolver::Backend::TVMHierarchical;
+  }
+  else { static_assert(!std::is_same_v<SchemeT, SchemeT>, "This must be specialized"); }
+}
+
+template<typename SchemeT>
+TVMQPSolver<SchemeT>::TVMQPSolver(mc_rbdyn::RobotsPtr robots, double dt)
+: QPSolver(robots, dt, backend_from_scheme<SchemeT>()), solver_(default_solver_options<SchemeT>())
 {
 }
 
-TVMQPSolver::TVMQPSolver(double dt) : QPSolver(dt, Backend::TVM), solver_(tvm::solver::DefaultLSSolverOptions{}) {}
+template<typename SchemeT>
+TVMQPSolver<SchemeT>::TVMQPSolver(double dt)
+: QPSolver(dt, backend_from_scheme<SchemeT>()), solver_(default_solver_options<SchemeT>())
+{
+}
 
-size_t TVMQPSolver::getContactIdx(const mc_rbdyn::Contact & contact)
+template<typename SchemeT>
+size_t TVMQPSolver<SchemeT>::getContactIdx(const mc_rbdyn::Contact & contact)
 {
   for(size_t i = 0; i < contacts_.size(); ++i)
   {
@@ -44,7 +80,8 @@ size_t TVMQPSolver::getContactIdx(const mc_rbdyn::Contact & contact)
   return contacts_.size();
 }
 
-void TVMQPSolver::setContacts(ControllerToken, const std::vector<mc_rbdyn::Contact> & contacts)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::setContacts(ControllerToken, const std::vector<mc_rbdyn::Contact> & contacts)
 {
   for(const auto & c : contacts) { addContact(c); }
   size_t i = 0;
@@ -69,7 +106,8 @@ void TVMQPSolver::setContacts(ControllerToken, const std::vector<mc_rbdyn::Conta
   }
 }
 
-const sva::ForceVecd TVMQPSolver::desiredContactForce(const mc_rbdyn::Contact & id) const
+template<typename SchemeT>
+const sva::ForceVecd TVMQPSolver<SchemeT>::desiredContactForce(const mc_rbdyn::Contact & id) const
 {
   const auto & r1 = robot(id.r1Index());
   auto it1 = dynamics_.find(r1.name());
@@ -80,17 +118,20 @@ const sva::ForceVecd TVMQPSolver::desiredContactForce(const mc_rbdyn::Contact & 
   return sva::ForceVecd::Zero();
 }
 
-double TVMQPSolver::solveTime()
+template<typename SchemeT>
+double TVMQPSolver<SchemeT>::solveTime()
 {
   return solve_dt_.count();
 }
 
-double TVMQPSolver::solveAndBuildTime()
+template<typename SchemeT>
+double TVMQPSolver<SchemeT>::solveAndBuildTime()
 {
   return solve_dt_.count();
 }
 
-bool TVMQPSolver::run_impl(FeedbackType fType)
+template<typename SchemeT>
+bool TVMQPSolver<SchemeT>::run_impl(FeedbackType fType)
 {
   switch(fType)
   {
@@ -110,7 +151,8 @@ bool TVMQPSolver::run_impl(FeedbackType fType)
   }
 }
 
-bool TVMQPSolver::runCommon()
+template<typename SchemeT>
+bool TVMQPSolver<SchemeT>::runCommon()
 {
   for(auto & c : constraints_) { c->update(*this); }
   for(auto & t : metaTasks_)
@@ -124,7 +166,8 @@ bool TVMQPSolver::runCommon()
   return r;
 }
 
-bool TVMQPSolver::runOpenLoop()
+template<typename SchemeT>
+bool TVMQPSolver<SchemeT>::runOpenLoop()
 {
   if(runCommon())
   {
@@ -138,7 +181,8 @@ bool TVMQPSolver::runOpenLoop()
   return false;
 }
 
-bool TVMQPSolver::runJointsFeedback(bool wVelocity)
+template<typename SchemeT>
+bool TVMQPSolver<SchemeT>::runJointsFeedback(bool wVelocity)
 {
   if(control_q_.size() < robots().size())
   {
@@ -194,7 +238,8 @@ bool TVMQPSolver::runJointsFeedback(bool wVelocity)
   return false;
 }
 
-bool TVMQPSolver::runClosedLoop(bool integrateControlState)
+template<typename SchemeT>
+bool TVMQPSolver<SchemeT>::runClosedLoop(bool integrateControlState)
 {
   if(control_q_.size() < robots().size())
   {
@@ -241,7 +286,8 @@ bool TVMQPSolver::runClosedLoop(bool integrateControlState)
   return false;
 }
 
-void TVMQPSolver::updateRobot(mc_rbdyn::Robot & robot)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::updateRobot(mc_rbdyn::Robot & robot)
 {
   auto & tvm_robot = robot.tvmRobot();
   rbd::vectorToParam(tvm_robot.tau()->value(), robot.controlTorque());
@@ -252,7 +298,8 @@ void TVMQPSolver::updateRobot(mc_rbdyn::Robot & robot)
   robot.forwardAcceleration();
 }
 
-void TVMQPSolver::addDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::addDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
 {
   const auto & r = robot(dyn->robotIndex());
   if(dynamics_.count(r.name()))
@@ -293,7 +340,8 @@ void TVMQPSolver::addDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
   }
 }
 
-void TVMQPSolver::removeDynamicsConstraint(mc_solver::ConstraintSet * maybe_dyn)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::removeDynamicsConstraint(mc_solver::ConstraintSet * maybe_dyn)
 {
   for(const auto & [r, dyn] : dynamics_)
   {
@@ -304,7 +352,8 @@ void TVMQPSolver::removeDynamicsConstraint(mc_solver::ConstraintSet * maybe_dyn)
   }
 }
 
-void TVMQPSolver::removeDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::removeDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
 {
   const auto & r = robot(dyn->robotIndex());
   dynamics_.erase(r.name());
@@ -327,13 +376,14 @@ void TVMQPSolver::removeDynamicsConstraint(mc_solver::DynamicsConstraint * dyn)
   }
 }
 
-void TVMQPSolver::addContactToDynamics(const std::string & robot,
-                                       const mc_rbdyn::RobotFrame & frame,
-                                       const std::vector<sva::PTransformd> & points,
-                                       tvm::VariableVector & forces,
-                                       std::vector<tvm::TaskWithRequirementsPtr> & constraints,
-                                       const Eigen::MatrixXd & frictionCone,
-                                       double dir)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::addContactToDynamics(const std::string & robot,
+                                                const mc_rbdyn::RobotFrame & frame,
+                                                const std::vector<sva::PTransformd> & points,
+                                                tvm::VariableVector & forces,
+                                                std::vector<tvm::TaskWithRequirementsPtr> & constraints,
+                                                const Eigen::MatrixXd & frictionCone,
+                                                double dir)
 {
   auto it = dynamics_.find(robot);
   if(it == dynamics_.end()) { return; }
@@ -357,7 +407,8 @@ void TVMQPSolver::addContactToDynamics(const std::string & robot,
   }
 }
 
-auto TVMQPSolver::addVirtualContactImpl(const mc_rbdyn::Contact & contact) -> std::tuple<size_t, bool>
+template<typename SchemeT>
+auto TVMQPSolver<SchemeT>::addVirtualContactImpl(const mc_rbdyn::Contact & contact) -> std::tuple<size_t, bool>
 {
   bool hasWork = false;
   auto idx = getContactIdx(contact);
@@ -402,7 +453,8 @@ auto TVMQPSolver::addVirtualContactImpl(const mc_rbdyn::Contact & contact) -> st
   return std::make_tuple(idx, hasWork);
 }
 
-void TVMQPSolver::addContact(const mc_rbdyn::Contact & contact)
+template<typename SchemeT>
+void TVMQPSolver<SchemeT>::addContact(const mc_rbdyn::Contact & contact)
 {
   size_t idx = contacts_.size();
   bool hasWork = false;
@@ -435,7 +487,8 @@ void TVMQPSolver::addContact(const mc_rbdyn::Contact & contact)
   addContactForce(r2.name(), f2, s2Points, data.f2_, data.f2Constraints_, -1.0);
 }
 
-auto TVMQPSolver::removeContact(size_t idx) -> ContactIterator
+template<typename SchemeT>
+auto TVMQPSolver<SchemeT>::removeContact(size_t idx) -> ContactIterator
 {
   auto & contact = contacts_[idx];
   auto & data = contactsData_[idx];
@@ -462,8 +515,13 @@ auto TVMQPSolver::removeContact(size_t idx) -> ContactIterator
     problem_.remove(*data.contactConstraint_);
     data.contactConstraint_.reset();
   }
-  contactsData_.erase(contactsData_.begin() + static_cast<decltype(contacts_)::difference_type>(idx));
-  return contacts_.erase(contacts_.begin() + static_cast<decltype(contacts_)::difference_type>(idx));
+  contactsData_.erase(contactsData_.begin() + static_cast<typename decltype(contacts_)::difference_type>(idx));
+  return contacts_.erase(contacts_.begin() + static_cast<typename decltype(contacts_)::difference_type>(idx));
 }
+
+template struct MC_SOLVER_DLLAPI TVMQPSolver<tvm::scheme::HierarchicalLeastSquares>;
+template struct MC_SOLVER_DLLAPI TVMQPSolver<tvm::scheme::WeightedLeastSquares>;
+
+} // namespace details
 
 } // namespace mc_solver

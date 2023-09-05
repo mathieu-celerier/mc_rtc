@@ -26,6 +26,7 @@ MCCoMController::MCCoMController(std::shared_ptr<mc_rbdyn::RobotModule> robot_mo
   comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
   postureTask->stiffness(1);
   postureTask->weight(1);
+  postureTask->priorityLevel(2);
   comTask->weight(1000);
 
   if(robot().hasSurface("LFullSole") && robot().hasSurface("RFullSole"))
@@ -65,7 +66,9 @@ void MCCoMController::reset(const ControllerResetData & reset_data)
 
 } // namespace mc_control
 
-MULTI_CONTROLLERS_CONSTRUCTOR("CoM",
-                              mc_control::MCCoMController(rm, dt, mc_control::MCController::Backend::Tasks),
-                              "CoM_TVM",
-                              mc_control::MCCoMController(rm, dt, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("CoM",
+                               mc_control::MCCoMController(rm, dt, mc_control::MCController::Backend::Tasks),
+                               "CoM_TVM",
+                               mc_control::MCCoMController(rm, dt, mc_control::MCController::Backend::TVM),
+                               "CoM_TVMHierarchical",
+                               mc_control::MCCoMController(rm, dt, mc_control::MCController::Backend::TVMHierarchical))

@@ -31,12 +31,17 @@ struct TasksImpl
 
 struct TVMImpl : public mc_tasks::TrajectoryTaskGeneric
 {
-  TVMImpl(const mc_rbdyn::RobotFrame & frame, double stiffness, double weight)
+  TVMImpl(Backend backend, const mc_rbdyn::RobotFrame & frame, double stiffness, double weight)
   : mc_tasks::TrajectoryTaskGeneric(frame, stiffness, weight)
   {
     Eigen::Vector6d dof = Eigen::Vector6d::Ones();
     dof.head(3).setZero();
-    finalize<Backend::TVM, mc_tvm::FrameVelocity>(frame, dof);
+    if(backend == Backend::TVM) { finalize<Backend::TVM, mc_tvm::FrameVelocity>(frame, dof); }
+    else if(backend == Backend::TVMHierarchical)
+    {
+      finalize<Backend::TVMHierarchical, mc_tvm::FrameVelocity>(frame, dof);
+    }
+    else { mc_rtc::log::error_and_throw("[AddRemoveContactTask] Not implement for this TVM backend"); }
   }
 };
 
@@ -50,7 +55,8 @@ mc_rtc::void_ptr initialize(MetaTask::Backend backend,
     case MetaTask::Backend::Tasks:
       return mc_rtc::make_void_ptr<TasksImpl>();
     case MetaTask::Backend::TVM:
-      return mc_rtc::make_void_ptr<TVMImpl>(frame, stiffness, weight);
+    case MetaTask::Backend::TVMHierarchical:
+      return mc_rtc::make_void_ptr<TVMImpl>(backend, frame, stiffness, weight);
     default:
       mc_rtc::log::error_and_throw("[AddRemoveContactTask] Not implemented for solver backend: {}", backend);
   }
@@ -118,6 +124,7 @@ AddRemoveContactTask::AddRemoveContactTask(const mc_rbdyn::Robots & robots,
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       Eigen::Vector6d refVel = Eigen::Vector6d::Zero();
       refVel.tail(3) = targetSpeed;
@@ -146,7 +153,7 @@ void AddRemoveContactTask::direction(double direction)
 {
   direction_ = direction;
   targetSpeed = direction_ * normal * speed_;
-  if(backend_ == Backend::TVM)
+  if(backend_ == Backend::TVM || backend_ == Backend::TVMHierarchical)
   {
     Eigen::Vector6d refVel = Eigen::Vector6d::Zero();
     refVel.tail(3) = targetSpeed;
@@ -158,7 +165,7 @@ void AddRemoveContactTask::speed(double s)
 {
   speed_ = s;
   targetSpeed = direction_ * normal * speed_;
-  if(backend_ == Backend::TVM)
+  if(backend_ == Backend::TVM || backend_ == Backend::TVMHierarchical)
   {
     Eigen::Vector6d refVel = Eigen::Vector6d::Zero();
     refVel.tail(3) = targetSpeed;
@@ -185,6 +192,7 @@ void AddRemoveContactTask::addToSolver(mc_solver::QPSolver & solver)
       tasks_solver(solver).addTask(tasks_impl(impl_)->linVelTaskPid.get());
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       MetaTask::addToSolver(*tvm_impl(impl_), solver);
       break;
     default:
@@ -202,6 +210,7 @@ void AddRemoveContactTask::removeFromSolver(mc_solver::QPSolver & solver)
       tasks_solver(solver).removeTask(tasks_impl(impl_)->linVelTaskPid.get());
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       MetaTask::removeFromSolver(*tvm_impl(impl_), solver);
       break;
     default:
@@ -223,6 +232,7 @@ void AddRemoveContactTask::update(mc_solver::QPSolver &)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto impl = tvm_impl(impl_);
       impl->weight(std::min(impl->weight() + 0.5, targetVelWeight));
@@ -244,6 +254,7 @@ void AddRemoveContactTask::dimWeight(const Eigen::VectorXd & dimW)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto impl = tvm_impl(impl_);
       impl->dimWeight(dimW);
@@ -264,6 +275,7 @@ Eigen::VectorXd AddRemoveContactTask::dimWeight() const
       return linVelTaskPid->dimWeight();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto impl = tvm_impl(impl_);
       return impl->dimWeight();
@@ -283,6 +295,7 @@ Eigen::VectorXd AddRemoveContactTask::eval() const
       return linVelTask->eval();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto impl = tvm_impl(impl_);
       return impl->eval();
@@ -302,6 +315,7 @@ Eigen::VectorXd AddRemoveContactTask::speed() const
       return linVelTask->speed();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto impl = tvm_impl(impl_);
       return impl->speed();

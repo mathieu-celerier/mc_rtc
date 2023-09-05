@@ -43,19 +43,22 @@ struct TVMCoMIncPlaneConstr
   {
   }
 
-  void addToSolver(mc_solver::TVMQPSolver & solver)
+  template<typename SolverT>
+  void addToSolver(SolverT & solver)
   {
     constraint_ = solver.problem().add(function_ >= 0., tvm::task_dynamics::VelocityDamper(solver.dt(), config_),
                                        {tvm::requirements::PriorityLevel(0)});
   }
 
-  void removeFromSolver(mc_solver::TVMQPSolver & solver)
+  template<typename SolverT>
+  void removeFromSolver(SolverT & solver)
   {
     solver.problem().remove(*constraint_);
     constraint_.reset();
   }
 
-  void setPlanes(mc_solver::TVMQPSolver & solver,
+  template<typename SolverT>
+  void setPlanes(SolverT & solver,
                  const std::vector<mc_rbdyn::Plane> & planes,
                  const std::vector<Eigen::Vector3d> & speeds,
                  const std::vector<Eigen::Vector3d> & normalsDots,
@@ -118,6 +121,7 @@ static mc_rtc::void_ptr make_constraint(QPSolver::Backend backend,
     case QPSolver::Backend::Tasks:
       return mc_rtc::make_void_ptr<details::TasksCoMIncPlaneConstr>(robots.robot(robotIndex), dt);
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return mc_rtc::make_void_ptr<details::TVMCoMIncPlaneConstr>(robots.robot(robotIndex));
     default:
       mc_rtc::log::error_and_throw("[CoMIncPlaneConstr] Not implemented for solver backend: {}", backend);
@@ -139,6 +143,9 @@ void CoMIncPlaneConstr::addToSolverImpl(QPSolver & solver)
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->addToSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)->addToSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -154,6 +161,9 @@ void CoMIncPlaneConstr::removeFromSolverImpl(QPSolver & solver)
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->removeFromSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)->removeFromSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -168,6 +178,7 @@ void CoMIncPlaneConstr::setActiveJoints(const std::vector<std::string> & joints)
           jointsToSelector(tasks_constraint(constraint_)->robot_, joints);
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       tvm_constraint(constraint_)->function_->selector() =
           jointsToSelector(tvm_constraint(constraint_)->function_->robot(), joints);
       break;
@@ -185,6 +196,7 @@ void CoMIncPlaneConstr::setInactiveJoints(const std::vector<std::string> & joint
           jointsToSelector<false>(tasks_constraint(constraint_)->robot_, joints);
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       tvm_constraint(constraint_)->function_->selector() =
           jointsToSelector<false>(tvm_constraint(constraint_)->function_->robot(), joints);
       break;
@@ -201,6 +213,7 @@ void CoMIncPlaneConstr::resetActiveJoints()
       tasks_constraint(constraint_)->constraint_.selector().setOnes();
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       tvm_constraint(constraint_)->function_->selector().setOnes();
       break;
     default:
@@ -258,6 +271,10 @@ void CoMIncPlaneConstr::setPlanes(QPSolver & solver,
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)
           ->setPlanes(tvm_solver(solver), planes, speeds, normalsDots, {iDist, sDist, damping, dampingOff});
+      break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_constraint(constraint_)
+          ->setPlanes(tvm_hsolver(solver), planes, speeds, normalsDots, {iDist, sDist, damping, dampingOff});
       break;
     default:
       break;

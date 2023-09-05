@@ -49,6 +49,9 @@ VectorOrientationTask::VectorOrientationTask(const mc_rbdyn::RobotFrame & frame,
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::VectorOrientationFunction>(frame, frameVector);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::VectorOrientationFunction>(frame, frameVector);
+      break;
     default:
       mc_rtc::log::error_and_throw("[VectorOrientationTask] Not implemented for solver backend: {}", backend_);
   }
@@ -82,6 +85,7 @@ void VectorOrientationTask::reset()
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->reset();
       break;
     default:
@@ -99,6 +103,7 @@ void VectorOrientationTask::targetVector(const Eigen::Vector3d & ori)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->target(ori);
       break;
     default:
@@ -115,6 +120,7 @@ Eigen::Vector3d VectorOrientationTask::targetVector() const
       return (frame_->X_b_f() * tasks_error(errorT)->target()).translation();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->target();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -130,6 +136,7 @@ Eigen::Vector3d VectorOrientationTask::actual() const
       return (frame_->X_b_f() * tasks_error(errorT)->actual()).translation();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(errorT)->actual();
     default:
       mc_rtc::log::error_and_throw("Not implemented");

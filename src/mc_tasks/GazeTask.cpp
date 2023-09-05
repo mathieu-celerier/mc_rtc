@@ -62,6 +62,14 @@ GazeTask::GazeTask(const std::string & bodyName,
       tvm_error(errorT)->estimate(point2d, depthEstimate);
       break;
     }
+    case Backend::TVMHierarchical:
+    {
+      auto & robot = robots.robot(robotIndex);
+      finalize<Backend::TVMHierarchical, mc_tvm::GazeFunction>(
+          *robot.makeTemporaryFrame(name_, robot.frame(bodyName), X_b_gaze, true));
+      tvm_error(errorT)->estimate(point2d, depthEstimate);
+      break;
+    }
     default:
       mc_rtc::log::error_and_throw("[GazeTask] Not implemented for solver backend: {}", backend_);
   }
@@ -96,6 +104,14 @@ GazeTask::GazeTask(const std::string & bodyName,
       tvm_error(errorT)->estimate(point3d);
       break;
     }
+    case Backend::TVMHierarchical:
+    {
+      auto & robot = robots.robot(robotIndex);
+      finalize<Backend::TVMHierarchical, mc_tvm::GazeFunction>(
+          *robot.makeTemporaryFrame(name_, robot.frame(bodyName), X_b_gaze, true));
+      tvm_error(errorT)->estimate(point3d);
+      break;
+    }
     default:
       mc_rtc::log::error_and_throw("[GazeTask] Not implemented for solver backend: {}", backend_);
   }
@@ -121,6 +137,10 @@ GazeTask::GazeTask(const mc_rbdyn::RobotFrame & frame, double stiffness, double 
       finalize<Backend::TVM, mc_tvm::GazeFunction>(frame);
       tvm_error(errorT)->estimate(error);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::GazeFunction>(frame);
+      tvm_error(errorT)->estimate(error);
+      break;
     default:
       mc_rtc::log::error_and_throw("[GazeTask] Not implemented for solver backend: {}", backend_);
   }
@@ -142,6 +162,7 @@ void GazeTask::error(const Eigen::Vector2d & point2d, const Eigen::Vector2d & po
       tasks_error(errorT)->error(point2d, point2d_ref);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(errorT)->estimate(point2d);
       tvm_error(errorT)->target(point2d_ref);
       break;
@@ -160,6 +181,7 @@ void GazeTask::error(const Eigen::Vector3d & point3d, const Eigen::Vector2d & po
         tasks_error(errorT)->error(point3d, point2d_ref);
         break;
       case Backend::TVM:
+      case Backend::TVMHierarchical:
         tvm_error(errorT)->estimate(point3d);
         tvm_error(errorT)->target(point2d_ref);
         break;

@@ -15,6 +15,9 @@ set(fsm_controller_HDR
     ${fsm_controller_HDR_DIR}/StateFactory.h
     ${fsm_controller_HDR_DIR}/Transition.h
     ${fsm_controller_HDR_DIR}/TransitionMap.h
+    ${fsm_controller_HDR_DIR}/TasksController.h
+    ${fsm_controller_HDR_DIR}/TVMController.h
+    ${fsm_controller_HDR_DIR}/TVMHierarchicalController.h
 )
 
 if(${PYTHON_BINDING})

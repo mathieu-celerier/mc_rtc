@@ -94,7 +94,9 @@ public:
     /** Use Tasks library as a backend */
     Tasks,
     /** Use TVM library as a backend */
-    TVM
+    TVM,
+    /** Use TVM hierarchical as a backend */
+    TVMHierarchical
   };
 
   /** This token is used to give mc_control::MCController access to some internals */
@@ -353,6 +355,8 @@ struct formatter<mc_solver::QPSolver::Backend> : public formatter<string_view>
         return formatter<string_view>::format("Tasks", ctx);
       case Backend::TVM:
         return formatter<string_view>::format("TVM", ctx);
+      case Backend::TVMHierarchical:
+        return formatter<string_view>::format("TVMHierarchical", ctx);
       case Backend::Unset:
         return formatter<string_view>::format("Unset", ctx);
       default:

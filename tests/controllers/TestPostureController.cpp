@@ -81,7 +81,9 @@ private:
 
 using Controller = mc_control::TestPostureController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestPostureController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestPostureController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestPostureController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestPostureController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestPostureController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

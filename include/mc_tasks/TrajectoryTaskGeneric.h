@@ -277,7 +277,7 @@ protected:
       if(refVel_.size() != trajectory.refVel().size()) { refVel_ = trajectory.refVel(); }
       if(refAccel_.size() != trajectory.refAccel().size()) { refAccel_ = trajectory.refAccel(); }
     }
-    else if constexpr(backend == Backend::TVM)
+    else if constexpr(backend == Backend::TVM || backend == Backend::TVMHierarchical)
     {
       auto error = static_cast<ErrorT *>(errorT.get());
       trajectoryT_ = mc_rtc::make_void_ptr<details::TVMTrajectoryTaskGenericPtr>(

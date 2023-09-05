@@ -32,7 +32,11 @@ bool MCPostureController::run()
 
 } // namespace mc_control
 
-MULTI_CONTROLLERS_CONSTRUCTOR("Posture",
-                              mc_control::MCPostureController(rm, dt, mc_control::MCController::Backend::Tasks),
-                              "Posture_TVM",
-                              mc_control::MCPostureController(rm, dt, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("Posture",
+                               mc_control::MCPostureController(rm, dt, mc_control::MCController::Backend::Tasks),
+                               "Posture_TVM",
+                               mc_control::MCPostureController(rm, dt, mc_control::MCController::Backend::TVM),
+                               "Posture_TVMHierarchical",
+                               mc_control::MCPostureController(rm,
+                                                               dt,
+                                                               mc_control::MCController::Backend::TVMHierarchical))

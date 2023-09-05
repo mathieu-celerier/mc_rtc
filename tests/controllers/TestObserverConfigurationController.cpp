@@ -46,7 +46,9 @@ private:
 
 using Controller = mc_control::TestObserverConfigurationControllerController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestObserverConfigurationController",
-                              Controller(rm, dt, config, Backend::Tasks),
-                              "TestObserverConfigurationController_TVM",
-                              Controller(rm, dt, config, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestObserverConfigurationController",
+                               Controller(rm, dt, config, Backend::Tasks),
+                               "TestObserverConfigurationController_TVM",
+                               Controller(rm, dt, config, Backend::TVM),
+                               "TestObserverConfigurationController_TVMHierarchical",
+                               Controller(rm, dt, config, Backend::TVMHierarchical))

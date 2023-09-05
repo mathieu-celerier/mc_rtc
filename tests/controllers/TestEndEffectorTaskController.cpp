@@ -137,7 +137,9 @@ private:
 
 using Controller = mc_control::TestEndEffectorTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestEndEffectorTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestEndEffectorTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestEndEffectorTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestEndEffectorTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestEndEffectorTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

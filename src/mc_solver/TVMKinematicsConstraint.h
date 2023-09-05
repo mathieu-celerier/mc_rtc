@@ -26,9 +26,11 @@ struct TVMKinematicsConstraint
 
   TVMKinematicsConstraint(const mc_rbdyn::Robot & robot, const std::array<double, 3> & damper, double vp);
 
-  void addToSolver(mc_solver::TVMQPSolver & solver);
+  template<typename SolverT>
+  void addToSolver(SolverT & solver);
 
-  void removeFromSolver(mc_solver::TVMQPSolver & solver);
+  template<typename SolverT>
+  void removeFromSolver(SolverT & solver);
 };
 
 } // namespace mc_solver

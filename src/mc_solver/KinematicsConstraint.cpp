@@ -34,7 +34,8 @@ TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
 {
 }
 
-void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
+template<typename SolverT>
+void TVMKinematicsConstraint::addToSolver(SolverT & solver)
 {
   auto & tvm_robot = robot_.tvmRobot();
   /** Joint limits */
@@ -103,7 +104,8 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
   /** FIXME Implement torque derivative and jerk bounds */
 }
 
-void TVMKinematicsConstraint::removeFromSolver(mc_solver::TVMQPSolver & solver)
+template<typename SolverT>
+void TVMKinematicsConstraint::removeFromSolver(SolverT & solver)
 {
   for(auto & c : mimics_constraints_)
   {
@@ -135,6 +137,7 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
     case QPSolver::Backend::Tasks:
       return initialize_tasks(robots, robotIndex, timeStep);
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return initialize_tvm(robots.robot(robotIndex));
     default:
       mc_rtc::log::error_and_throw("[KinematicsConstraint] Not implemented for solver backend: {}", backend);
@@ -193,6 +196,7 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
     case QPSolver::Backend::Tasks:
       return initialize_tasks(robots, robotIndex, timeStep, damper, velocityPercent);
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return initialize_tvm(robots.robot(robotIndex), damper, velocityPercent);
     default:
       mc_rtc::log::error_and_throw("[KinematicsConstraint] Not implemented for solver backend: {}", backend);
@@ -219,6 +223,9 @@ void KinematicsConstraint::addToSolverImpl(mc_solver::QPSolver & solver)
     case QPSolver::Backend::TVM:
       static_cast<TVMKinematicsConstraint *>(constraint_.get())->addToSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      static_cast<TVMKinematicsConstraint *>(constraint_.get())->addToSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -234,6 +241,9 @@ void KinematicsConstraint::removeFromSolverImpl(mc_solver::QPSolver & solver)
       break;
     case QPSolver::Backend::TVM:
       static_cast<TVMKinematicsConstraint *>(constraint_.get())->removeFromSolver(tvm_solver(solver));
+      break;
+    case QPSolver::Backend::TVMHierarchical:
+      static_cast<TVMKinematicsConstraint *>(constraint_.get())->removeFromSolver(tvm_hsolver(solver));
       break;
     default:
       break;

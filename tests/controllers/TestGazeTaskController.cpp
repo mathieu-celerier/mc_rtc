@@ -82,7 +82,9 @@ private:
 
 using Controller = mc_control::TestGazeTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestGazeTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestGazeTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestGazeTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestGazeTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestGazeTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

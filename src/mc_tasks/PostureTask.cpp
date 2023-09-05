@@ -28,10 +28,18 @@ inline static mc_rtc::void_ptr_caster<mc_tvm::PostureFunction> tvm_error{};
 
 struct TVMPostureTask : public TrajectoryTaskGeneric
 {
-  TVMPostureTask(const mc_rbdyn::Robots & robots, unsigned int robotIndex, double stiffness, double weight)
+  TVMPostureTask(Backend backend,
+                 const mc_rbdyn::Robots & robots,
+                 unsigned int robotIndex,
+                 double stiffness,
+                 double weight)
   : TrajectoryTaskGeneric(robots, robotIndex, stiffness, weight)
   {
-    finalize<Backend::TVM, mc_tvm::PostureFunction>(robots.robot(robotIndex));
+    if(backend == Backend::TVM) { finalize<Backend::TVM, mc_tvm::PostureFunction>(robots.robot(robotIndex)); }
+    else if(backend == Backend::TVMHierarchical)
+    {
+      finalize<Backend::TVMHierarchical, mc_tvm::PostureFunction>(robots.robot(robotIndex));
+    }
     type_ = "posture";
     name_ = std::string("posture_") + robots.robot(robotIndex).name();
   }
@@ -96,9 +104,10 @@ inline static mc_rtc::void_ptr make_error(MetaTask::Backend backend,
       return mc_rtc::make_void_ptr<tasks::qp::PostureTask>(solver.robots().mbs(), static_cast<int>(rIndex),
                                                            solver.robot(rIndex).mbc().q, stiffness, weight);
     case MetaTask::Backend::TVM:
-      return mc_rtc::make_void_ptr<details::TVMPostureTask>(solver.robots(), rIndex, stiffness, weight);
+    case MetaTask::Backend::TVMHierarchical:
+      return mc_rtc::make_void_ptr<details::TVMPostureTask>(backend, solver.robots(), rIndex, stiffness, weight);
     default:
-      mc_rtc::log::error_and_throw("[PosutreTask] Not implemented for solver backend: {}", backend);
+      mc_rtc::log::error_and_throw("[PostureTask] Not implemented for solver backend: {}", backend);
   }
 }
 
@@ -144,6 +153,7 @@ void PostureTask::dimWeight(const Eigen::VectorXd & dimW)
       tasks_error(pt_)->dimWeight(dimW);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->dimWeight(dimW);
       break;
     default:
@@ -158,6 +168,7 @@ Eigen::VectorXd PostureTask::dimWeight() const
     case Backend::Tasks:
       return tasks_error(pt_)->dimWeight();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->dimWeight();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -195,6 +206,7 @@ void PostureTask::selectUnactiveJoints(mc_solver::QPSolver &,
       case Backend::Tasks:
         return 0;
       case Backend::TVM:
+      case Backend::TVMHierarchical:
         return robot.mb().joint(0).dof();
       default:
         mc_rtc::log::error_and_throw("Not implemented in backend {}", backend_);
@@ -226,6 +238,7 @@ Eigen::VectorXd PostureTask::eval() const
       return pt.dimWeight().asDiagonal() * pt.eval();
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->eval();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -246,6 +259,7 @@ void PostureTask::refVel(const Eigen::VectorXd & refVel) noexcept
       tasks_error(pt_)->refVel(refVel);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->refVel(refVel);
       break;
     default:
@@ -260,6 +274,7 @@ const Eigen::VectorXd & PostureTask::refVel() const noexcept
     case Backend::Tasks:
       return tasks_error(pt_)->refVel();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->refVel();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -275,6 +290,7 @@ void PostureTask::refAccel(const Eigen::VectorXd & refAccel) noexcept
       tasks_error(pt_)->refAccel(refAccel);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->refAccel(refAccel);
       break;
     default:
@@ -289,6 +305,7 @@ const Eigen::VectorXd & PostureTask::refAccel() const noexcept
     case Backend::Tasks:
       return tasks_error(pt_)->refAccel();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->refAccel();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -305,6 +322,7 @@ void PostureTask::addToSolver(mc_solver::QPSolver & solver)
       tasks_solver(solver).addTask(tasks_error(pt_));
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       MetaTask::addToSolver(*tvm_error(pt_), solver);
       break;
     default:
@@ -322,6 +340,7 @@ void PostureTask::removeFromSolver(mc_solver::QPSolver & solver)
       tasks_solver(solver).removeTask(tasks_error(pt_));
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       MetaTask::removeFromSolver(*tvm_error(pt_), solver);
       break;
     default:
@@ -341,6 +360,7 @@ void PostureTask::update(mc_solver::QPSolver & solver)
       break;
     }
     case Backend::TVM:
+    case Backend::TVMHierarchical:
     {
       auto & pt = *tvm_error(pt_);
       pt.update(solver);
@@ -362,6 +382,7 @@ void PostureTask::posture(const std::vector<std::vector<double>> & p)
       tasks_error(pt_)->posture(p);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->posture(p);
       break;
     default:
@@ -382,6 +403,7 @@ void PostureTask::stiffness(double s)
       tasks_error(pt_)->stiffness(s);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->stiffness(s);
       break;
     default:
@@ -396,6 +418,7 @@ double PostureTask::stiffness() const
     case Backend::Tasks:
       return tasks_error(pt_)->stiffness();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->stiffness();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -410,6 +433,7 @@ void PostureTask::damping(double d)
       tasks_error(pt_)->gains(stiffness(), d);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->damping(d);
     default:
       break;
@@ -423,6 +447,7 @@ double PostureTask::damping() const
     case Backend::Tasks:
       return tasks_error(pt_)->damping();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->damping();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -437,6 +462,7 @@ inline void PostureTask::setGains(double s, double d)
       tasks_error(pt_)->gains(s, d);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->setGains(s, d);
       break;
     default:
@@ -452,6 +478,7 @@ void PostureTask::weight(double w)
       tasks_error(pt_)->weight(w);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->weight(w);
       break;
     default:
@@ -466,6 +493,7 @@ double PostureTask::weight() const
     case Backend::Tasks:
       return tasks_error(pt_)->weight();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return tvm_error(pt_)->weight();
     default:
       mc_rtc::log::error_and_throw("Not implemented");
@@ -485,6 +513,7 @@ void PostureTask::jointGains(const mc_solver::QPSolver & solver, const std::vect
       tasks_error(pt_)->jointsGains(solver.robots().mbs(), jgs);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->jointsGains(jgs);
       break;
     default:
@@ -500,6 +529,7 @@ void PostureTask::jointStiffness(const mc_solver::QPSolver & solver, const std::
       tasks_error(pt_)->jointsStiffness(solver.robots().mbs(), jss);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       tvm_error(pt_)->jointsStiffness(jss);
       break;
     default:

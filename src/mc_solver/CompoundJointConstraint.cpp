@@ -111,12 +111,14 @@ struct TVMCompoundJointConstraint
     }
   }
 
-  void addToSolver(mc_solver::TVMQPSolver & solver)
+  template<typename SolverT>
+  void addToSolver(SolverT & solver)
   {
     for(const auto & f : functions_) { constraints_.push_back(solver.problem().add(f <= 0.)); }
   }
 
-  void removeFromSolver(mc_solver::TVMQPSolver & solver)
+  template<typename SolverT>
+  void removeFromSolver(SolverT & solver)
   {
     for(const auto & c : constraints_) { solver.problem().remove(*c); }
     constraints_.clear();
@@ -138,6 +140,7 @@ static mc_rtc::void_ptr make_constraint(QPSolver::Backend backend,
       return mc_rtc::make_void_ptr<details::CompoundJointConstraint>(robots, rIndex, dt, cs);
     }
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
     {
       return mc_rtc::make_void_ptr<details::TVMCompoundJointConstraint>(robots.robot(rIndex));
     }
@@ -170,6 +173,9 @@ void CompoundJointConstraint::addToSolverImpl(QPSolver & solver)
     case QPSolver::Backend::TVM:
       static_cast<details::TVMCompoundJointConstraint *>(constraint_.get())->addToSolver(tvm_solver(solver));
       break;
+    case QPSolver::Backend::TVMHierarchical:
+      static_cast<details::TVMCompoundJointConstraint *>(constraint_.get())->addToSolver(tvm_hsolver(solver));
+      break;
     default:
       break;
   }
@@ -185,6 +191,9 @@ void CompoundJointConstraint::removeFromSolverImpl(QPSolver & solver)
       break;
     case QPSolver::Backend::TVM:
       static_cast<details::TVMCompoundJointConstraint *>(constraint_.get())->removeFromSolver(tvm_solver(solver));
+      break;
+    case QPSolver::Backend::TVMHierarchical:
+      static_cast<details::TVMCompoundJointConstraint *>(constraint_.get())->removeFromSolver(tvm_hsolver(solver));
       break;
     default:
       break;

@@ -29,6 +29,7 @@ namespace mc_solver
 namespace details
 {
 
+template<typename SolverT>
 struct TVMCollisionConstraint
 {
   struct CollisionData
@@ -39,10 +40,12 @@ struct TVMCollisionConstraint
     mc_tvm::CollisionFunctionPtr function;
     tvm::TaskWithRequirementsPtr task;
   };
+  using CollisionDataIterator = typename std::vector<CollisionData>::iterator;
+
   /** All collisions handled by this constraint */
   std::vector<CollisionData> data_;
   /** Solver this has been added to */
-  mc_solver::TVMQPSolver * solver;
+  SolverT * solver;
 
   auto getData(const mc_rbdyn::Collision & col)
   {
@@ -55,8 +58,7 @@ struct TVMCollisionConstraint
   }
 
   template<bool Delete>
-  std::vector<CollisionData>::iterator removeOrDeleteCollision(TVMQPSolver & solver,
-                                                               std::vector<CollisionData>::iterator it)
+  CollisionDataIterator removeOrDeleteCollision(SolverT & solver, CollisionDataIterator it)
   {
     if(it == data_.end()) { return data_.end(); }
     if(it->task)
@@ -68,14 +70,14 @@ struct TVMCollisionConstraint
     else { return it; }
   }
 
-  void deleteCollision(TVMQPSolver & solver, const mc_rbdyn::Collision & col)
+  void deleteCollision(SolverT & solver, const mc_rbdyn::Collision & col)
   {
     removeOrDeleteCollision<true>(solver, getData(col));
   }
 
-  void deleteCollision(TVMQPSolver & solver, int id) { removeOrDeleteCollision<true>(solver, getData(id)); }
+  void deleteCollision(SolverT & solver, int id) { removeOrDeleteCollision<true>(solver, getData(id)); }
 
-  void removeCollisions(mc_solver::TVMQPSolver & solver)
+  void removeCollisions(SolverT & solver)
   {
     for(auto it = data_.begin(); it != data_.end(); ++it) { removeOrDeleteCollision<false>(solver, it); }
   }
@@ -91,7 +93,7 @@ struct TVMCollisionConstraint
     while(it != data_.end()) { it = removeOrDeleteCollision<true>(*solver, it); }
   }
 
-  CollisionData & createCollision(TVMQPSolver & solver,
+  CollisionData & createCollision(SolverT & solver,
                                   const mc_rbdyn::Robot & r1,
                                   const mc_rbdyn::Robot & r2,
                                   const mc_rbdyn::Collision & col,
@@ -107,7 +109,7 @@ struct TVMCollisionConstraint
     return data;
   }
 
-  void addCollision(TVMQPSolver & solver, CollisionData & data)
+  void addCollision(SolverT & solver, CollisionData & data)
   {
     const auto & col = data.collision;
     data.task = solver.problem().add(
@@ -123,7 +125,8 @@ struct TVMCollisionConstraint
 
 /** Helper to cast the constraint */
 static inline mc_rtc::void_ptr_caster<tasks::qp::CollisionConstr> tasks_constraint{};
-static inline mc_rtc::void_ptr_caster<details::TVMCollisionConstraint> tvm_constraint{};
+static inline mc_rtc::void_ptr_caster<details::TVMCollisionConstraint<mc_solver::TVMQPSolver>> tvm_constraint{};
+static inline mc_rtc::void_ptr_caster<details::TVMCollisionConstraint<mc_solver::TVMHQPSolver>> tvm_hconstraint{};
 
 /** Helper for wildcard
  *
@@ -158,7 +161,9 @@ static mc_rtc::void_ptr make_constraint(QPSolver::Backend backend, const mc_rbdy
     case QPSolver::Backend::Tasks:
       return mc_rtc::make_void_ptr<tasks::qp::CollisionConstr>(robots.mbs(), timeStep);
     case QPSolver::Backend::TVM:
-      return mc_rtc::make_void_ptr<details::TVMCollisionConstraint>();
+      return mc_rtc::make_void_ptr<details::TVMCollisionConstraint<mc_solver::TVMQPSolver>>();
+    case QPSolver::Backend::TVMHierarchical:
+      return mc_rtc::make_void_ptr<details::TVMCollisionConstraint<mc_solver::TVMHQPSolver>>();
     default:
       mc_rtc::log::error_and_throw("[CollisionConstr] Not implemented for solver backend: {}", backend);
   }
@@ -206,6 +211,9 @@ bool CollisionsConstraint::removeCollision(QPSolver & solver, const std::string 
       case QPSolver::Backend::TVM:
         tvm_constraint(constraint_)->deleteCollision(tvm_solver(solver), p.second);
         break;
+      case QPSolver::Backend::TVMHierarchical:
+        tvm_hconstraint(constraint_)->deleteCollision(tvm_hsolver(solver), p.second);
+        break;
       default:
         break;
     }
@@ -242,6 +250,9 @@ bool CollisionsConstraint::removeCollisionByBody(QPSolver & solver,
         case QPSolver::Backend::TVM:
           tvm_constraint(constraint_)->deleteCollision(tvm_solver(solver), out.first);
           break;
+        case QPSolver::Backend::TVMHierarchical:
+          tvm_hconstraint(constraint_)->deleteCollision(tvm_hsolver(solver), out.first);
+          break;
         default:
           break;
       }
@@ -266,6 +277,7 @@ bool CollisionsConstraint::removeCollisionByBody(QPSolver & solver,
         break;
       }
       case QPSolver::Backend::TVM:
+      case QPSolver::Backend::TVMHierarchical:
         break;
       default:
         break;
@@ -331,6 +343,13 @@ void CollisionsConstraint::__addCollision(mc_solver::QPSolver & solver, const mc
       auto & data =
           tvm_constraint(constraint_)->createCollision(tvm_solver(solver), r1, r2, col, collId, r1Selector, r2Selector);
       if(inSolver_) { tvm_constraint(constraint_)->addCollision(tvm_solver(solver), data); }
+      break;
+    }
+    case QPSolver::Backend::TVMHierarchical:
+    {
+      auto & data = tvm_hconstraint(constraint_)
+                        ->createCollision(tvm_hsolver(solver), r1, r2, col, collId, r1Selector, r2Selector);
+      if(inSolver_) { tvm_hconstraint(constraint_)->addCollision(tvm_hsolver(solver), data); }
       break;
     }
     default:
@@ -407,6 +426,14 @@ void CollisionsConstraint::toggleCollisionMonitor(int collId, const mc_rbdyn::Co
                    [fn]() -> const Eigen::Vector3d & { return fn->p2(); });
         break;
       }
+      case QPSolver::Backend::TVMHierarchical:
+      {
+        auto collConstr = tvm_hconstraint(constraint_);
+        auto fn = collConstr->getData(collId)->function;
+        addMonitor([fn]() { return fn->distance(); }, [fn]() -> const Eigen::Vector3d & { return fn->p1(); },
+                   [fn]() -> const Eigen::Vector3d & { return fn->p2(); });
+        break;
+      }
       default:
         break;
     }
@@ -433,6 +460,7 @@ void CollisionsConstraint::addCollisions(QPSolver & solver, const std::vector<mc
       break;
     }
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       break;
     default:
       break;
@@ -460,6 +488,13 @@ void CollisionsConstraint::addToSolverImpl(QPSolver & solver)
       auto cstr = tvm_constraint(constraint_);
       for(auto & c : cstr->data_) { tvm_constraint(constraint_)->addCollision(tvm_solver(solver), c); }
       tvm_constraint(constraint_)->solver = &tvm_solver(solver);
+      break;
+    }
+    case QPSolver::Backend::TVMHierarchical:
+    {
+      auto cstr = tvm_hconstraint(constraint_);
+      for(auto & c : cstr->data_) { tvm_hconstraint(constraint_)->addCollision(tvm_hsolver(solver), c); }
+      tvm_hconstraint(constraint_)->solver = &tvm_hsolver(solver);
       break;
     }
     default:
@@ -516,6 +551,12 @@ void CollisionsConstraint::removeFromSolverImpl(QPSolver & solver)
       tvm_constraint(constraint_)->solver = nullptr;
       break;
     }
+    case QPSolver::Backend::TVMHierarchical:
+    {
+      tvm_hconstraint(constraint_)->removeCollisions(tvm_hsolver(solver));
+      tvm_hconstraint(constraint_)->solver = nullptr;
+      break;
+    }
     default:
       break;
   }
@@ -533,6 +574,9 @@ void CollisionsConstraint::reset()
       break;
     case QPSolver::Backend::TVM:
       tvm_constraint(constraint_)->clear();
+      break;
+    case QPSolver::Backend::TVMHierarchical:
+      tvm_hconstraint(constraint_)->clear();
       break;
     default:
       break;

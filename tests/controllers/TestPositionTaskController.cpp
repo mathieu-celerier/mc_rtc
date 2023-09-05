@@ -127,7 +127,9 @@ private:
 
 using Controller = mc_control::TestPositionTaskController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestPositionTaskController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestPositionTaskController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestPositionTaskController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestPositionTaskController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestPositionTaskController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

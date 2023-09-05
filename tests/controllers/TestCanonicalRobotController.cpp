@@ -96,7 +96,9 @@ private:
 
 using Controller = mc_control::TestCanonicalRobotController;
 using Backend = mc_control::MCController::Backend;
-MULTI_CONTROLLERS_CONSTRUCTOR("TestCanonicalRobotController",
-                              Controller(rm, dt, Backend::Tasks),
-                              "TestCanonicalRobotController_TVM",
-                              Controller(rm, dt, Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR("TestCanonicalRobotController",
+                               Controller(rm, dt, Backend::Tasks),
+                               "TestCanonicalRobotController_TVM",
+                               Controller(rm, dt, Backend::TVM),
+                               "TestCanonicalRobotController_TVMHierarchical",
+                               Controller(rm, dt, Backend::TVMHierarchical))

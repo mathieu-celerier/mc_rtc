@@ -10,9 +10,13 @@
 
 #include <tvm/ControlProblem.h>
 #include <tvm/LinearizedControlProblem.h>
+#include <tvm/scheme/HierarchicalLeastSquares.h>
 #include <tvm/scheme/WeightedLeastSquares.h>
 
 namespace mc_solver
+{
+
+namespace details
 {
 
 /** This implements the QPSolver interface for the TVM backend
@@ -20,6 +24,7 @@ namespace mc_solver
  * This solver can accepts tasks and constraints from mc_rtc
  *
  */
+template<typename SchemeT>
 struct MC_SOLVER_DLLAPI TVMQPSolver final : public QPSolver
 {
   TVMQPSolver(mc_rbdyn::RobotsPtr robots, double timeStep);
@@ -70,7 +75,7 @@ private:
   /** Control problem */
   tvm::LinearizedControlProblem problem_;
   /** Solver scheme */
-  tvm::scheme::WeightedLeastSquares solver_;
+  SchemeT solver_;
   /** Contact data on the solver side */
   struct ContactData
   {
@@ -152,6 +157,14 @@ private:
                             double dir);
 };
 
+extern template struct TVMQPSolver<tvm::scheme::HierarchicalLeastSquares>;
+extern template struct TVMQPSolver<tvm::scheme::WeightedLeastSquares>;
+
+} // namespace details
+
+using TVMHQPSolver = details::TVMQPSolver<tvm::scheme::HierarchicalLeastSquares>;
+using TVMQPSolver = details::TVMQPSolver<tvm::scheme::WeightedLeastSquares>;
+
 /** Helper to get a \ref TVMQPSolver from a \ref QPSolver instance
  *
  * The caller should make sure the cast is valid by checking the QPSolver backend.
@@ -167,6 +180,41 @@ inline TVMQPSolver & tvm_solver(QPSolver & solver) noexcept
 inline const TVMQPSolver & tvm_solver(const QPSolver & solver) noexcept
 {
   return TVMQPSolver::from_solver(solver);
+}
+
+/** Helper to get a \ref TVMHQPSolver from a \ref QPSolver instance
+ *
+ * The caller should make sure the cast is valid by checking the QPSolver backend.
+ *
+ * In debug the program will abort otherwise, in release UB abounds
+ */
+inline TVMHQPSolver & tvm_hsolver(QPSolver & solver) noexcept
+{
+  return TVMHQPSolver::from_solver(solver);
+}
+
+/* const version */
+inline const TVMHQPSolver & tvm_hsolver(const QPSolver & solver) noexcept
+{
+  return TVMHQPSolver::from_solver(solver);
+}
+
+/** Helper to get a \ref tvm::LinearizedControlProblem from a \ref QPSolver instance
+ *
+ * This aborts if the solver does not have the right backend
+ *
+ */
+inline tvm::LinearizedControlProblem & tvm_problem(QPSolver & solver) noexcept
+{
+  switch(solver.backend())
+  {
+    case QPSolver::Backend::TVM:
+      return tvm_solver(solver).problem();
+    case QPSolver::Backend::TVMHierarchical:
+      return tvm_hsolver(solver).problem();
+    default:
+      mc_rtc::log::error_and_throw("tvm_problem(solver) called on a solver with the wrong backend");
+  }
 }
 
 } // namespace mc_solver

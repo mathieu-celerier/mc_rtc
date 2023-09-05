@@ -919,7 +919,7 @@ check_and_clone_git_dependency()
 }
 
 # If the dependencies have already been cloned, check if the local state of the repository is clean before upgrading
-GIT_DEPENDENCIES="loco-3d/ndcurves#v1.1.5 jrl-umi3218/SpaceVecAlg jrl-umi3218/state-observation jrl-umi3218/sch-core jrl-umi3218/RBDyn jrl-umi3218/eigen-qld jrl-umi3218/eigen-quadprog jrl-umi3218/Tasks jrl-umi3218/tvm"
+GIT_DEPENDENCIES="loco-3d/ndcurves#v1.1.5 jrl-umi3218/SpaceVecAlg jrl-umi3218/state-observation jrl-umi3218/sch-core jrl-umi3218/RBDyn jrl-umi3218/eigen-qld jrl-umi3218/eigen-quadprog jrl-umi3218/Tasks jrl-umi3218/lexls jrl-umi3218/tvm"
 if [ "x$SYSTEM_HAS_SPDLOG" == xOFF ]
 then
   GIT_DEPENDENCIES="gabime/spdlog#v1.6.1 $GIT_DEPENDENCIES"
@@ -1259,7 +1259,10 @@ export DISABLE_NINJA=OFF
 
 build_git_dependency jrl-umi3218/Tasks tasks
 
-export CMAKE_ADDITIONAL_OPTIONS="-DTVM_WITH_QUADPROG:BOOL=ON -DTVM_WITH_ROBOT:BOOL=OFF ${OLD_CMAKE_OPTIONS}"
+export CMAKE_ADDITIONAL_OPTIONS="-DINSTALL_PDF_DOCUMENTATION:BOOL=OFF -DINSTALL_HTML_DOCUMENTATION:BOOL=OFF"
+build_git_dependency jrl-umi3218/lexls lexls
+
+export CMAKE_ADDITIONAL_OPTIONS="-DTVM_WITH_LEXLS:BOOL=ON -DTVM_WITH_QUADPROG:BOOL=ON -DTVM_WITH_ROBOT:BOOL=OFF ${OLD_CMAKE_OPTIONS}"
 if $WITH_LSSOL
 then
   export CMAKE_ADDITIONAL_OPTIONS="-DTVM_WITH_LSSOL:BOOL=ON ${CMAKE_ADDITIONAL_OPTIONS}"

@@ -66,7 +66,8 @@ static mc_rtc::void_ptr initialize_tasks(const mc_rbdyn::Robots & robots,
 
 mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot, bool useExternalForces)
 {
-  return mc_rtc::make_void_ptr<mc_tvm::DynamicFunctionPtr>(std::make_shared<mc_tvm::DynamicFunction>(robot, useExternalForces));
+  return mc_rtc::make_void_ptr<mc_tvm::DynamicFunctionPtr>(
+      std::make_shared<mc_tvm::DynamicFunction>(robot, useExternalForces));
 }
 
 static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
@@ -81,6 +82,7 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
     case QPSolver::Backend::Tasks:
       return initialize_tasks(robots, robotIndex, timeStep, infTorque);
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
       return initialize_tvm(robots.robot(robotIndex), useExternalForces);
     default:
       mc_rtc::log::error_and_throw("[DynamicsConstraint] Not implemented for solver backend: {}", backend);
@@ -93,7 +95,8 @@ DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        bool infTorque,
                                        bool addExternalTorques)
 : KinematicsConstraint(robots, robotIndex, timeStep),
-  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)), robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
+  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)),
+  robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
 {
 }
 
@@ -105,7 +108,8 @@ DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        bool infTorque,
                                        bool addExternalTorques)
 : KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent),
-  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)), robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
+  motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, addExternalTorques)),
+  robotIndex_(robotIndex), useExternalForces_(addExternalTorques)
 {
 }
 
@@ -119,9 +123,10 @@ void DynamicsConstraint::addToSolverImpl(QPSolver & solver)
           ->addToSolver(solver.robots().mbs(), static_cast<TasksQPSolver &>(solver).solver());
       break;
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
     {
       auto & constraints_ = static_cast<TVMKinematicsConstraint *>(constraint_.get())->constraints_;
-      auto & problem = tvm_solver(solver).problem();
+      auto & problem = tvm_problem(solver);
       auto & tvm_robot = solver.robot(robotIndex_).tvmRobot();
       auto tL = problem.add(tvm_robot.limits().tl <= tvm_robot.tau() <= tvm_robot.limits().tu,
                             tvm::task_dynamics::None(), {tvm::requirements::PriorityLevel(0)});
@@ -150,9 +155,10 @@ void DynamicsConstraint::removeFromSolverImpl(QPSolver & solver)
       break;
     }
     case QPSolver::Backend::TVM:
+    case QPSolver::Backend::TVMHierarchical:
     {
       auto & constr = *static_cast<TVMKinematicsConstraint *>(constraint_.get());
-      auto & problem = tvm_solver(solver).problem();
+      auto & problem = tvm_problem(solver);
       problem.removeSubstitutionFor(*problem.constraint(*constr.constraints_.back()));
       KinematicsConstraint::removeFromSolverImpl(solver);
       break;

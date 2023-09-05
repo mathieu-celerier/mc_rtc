@@ -4,7 +4,10 @@
 
 #include "mc_admittance_sample_controller.h"
 
-MULTI_CONTROLLERS_CONSTRUCTOR("AdmittanceSample",
-                              AdmittanceSampleController(rm, dt, config, mc_control::MCController::Backend::Tasks),
-                              "AdmittanceSample_TVM",
-                              AdmittanceSampleController(rm, dt, config, mc_control::MCController::Backend::TVM))
+TRIPLE_CONTROLLERS_CONSTRUCTOR(
+    "AdmittanceSample",
+    AdmittanceSampleController(rm, dt, config, mc_control::MCController::Backend::Tasks),
+    "AdmittanceSample_TVM",
+    AdmittanceSampleController(rm, dt, config, mc_control::MCController::Backend::TVM),
+    "AdmittanceSample_TVMHierarchical",
+    AdmittanceSampleController(rm, dt, config, mc_control::MCController::Backend::TVMHierarchical))

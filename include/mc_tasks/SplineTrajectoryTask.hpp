@@ -38,6 +38,9 @@ SplineTrajectoryTask<Derived>::SplineTrajectoryTask(const mc_rbdyn::RobotFrame &
     case Backend::TVM:
       finalize<Backend::TVM, mc_tvm::TransformFunction>(frame);
       break;
+    case Backend::TVMHierarchical:
+      finalize<Backend::TVMHierarchical, mc_tvm::TransformFunction>(frame);
+      break;
     default:
       mc_rtc::log::error_and_throw("[SplineTrajectoryTask] Not implemented for backend: {}", backend_);
   }
@@ -347,6 +350,7 @@ void SplineTrajectoryTask<Derived>::refPose(const sva::PTransformd & target)
       static_cast<tasks::qp::TransformTask *>(errorT.get())->target(target);
       break;
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       static_cast<mc_tvm::TransformFunction *>(errorT.get())->pose(target);
       break;
     default:
@@ -362,6 +366,7 @@ const sva::PTransformd & SplineTrajectoryTask<Derived>::refPose() const
     case Backend::Tasks:
       return static_cast<const tasks::qp::TransformTask *>(errorT.get())->target();
     case Backend::TVM:
+    case Backend::TVMHierarchical:
       return static_cast<const mc_tvm::TransformFunction *>(errorT.get())->pose();
     default:
       mc_rtc::log::error_and_throw("Not implemented");

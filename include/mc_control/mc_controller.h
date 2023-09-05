@@ -53,7 +53,7 @@
       }                                                                                               \
     }
 
-/** Provides all functions except create */
+/** Provides create with two variants of the controller */
 #  define MULTI_CONTROLLERS_CONSTRUCTOR(NAME0, NEWCTL0, NAME1, NEWCTL1)              \
     extern "C"                                                                       \
     {                                                                                \
@@ -80,6 +80,36 @@
         if(name == NAME0) { return new NEWCTL0; }                                    \
         return new NEWCTL1;                                                          \
       }                                                                              \
+    }
+
+/** Provides create with three variants of the controller */
+#  define TRIPLE_CONTROLLERS_CONSTRUCTOR(NAME0, NEWCTL0, NAME1, NEWCTL1, NAME2, NEWCTL2) \
+    extern "C"                                                                           \
+    {                                                                                    \
+      CONTROLLER_MODULE_API void MC_RTC_CONTROLLER(std::vector<std::string> & names)     \
+      {                                                                                  \
+        CONTROLLER_CHECK_VERSION(NAME0)                                                  \
+        names = {NAME0, NAME1, NAME2};                                                   \
+      }                                                                                  \
+                                                                                         \
+      CONTROLLER_MODULE_API void destroy(mc_control::MCController * ptr)                 \
+      {                                                                                  \
+        delete ptr;                                                                      \
+      }                                                                                  \
+      CONTROLLER_MODULE_API unsigned int create_args_required()                          \
+      {                                                                                  \
+        return 4;                                                                        \
+      }                                                                                  \
+      CONTROLLER_MODULE_API mc_control::MCController * create(                           \
+          const std::string & name,                                                      \
+          const mc_rbdyn::RobotModulePtr & rm,                                           \
+          const double & dt,                                                             \
+          [[maybe_unused]] const mc_control::Configuration & config)                     \
+      {                                                                                  \
+        if(name == NAME0) { return new NEWCTL0; }                                        \
+        else if(name == NAME1) { return new NEWCTL1; }                                   \
+        return new NEWCTL2;                                                              \
+      }                                                                                  \
     }
 
 /** Provides a handle to construct a generic controller */
