@@ -12,29 +12,29 @@ namespace mc_tasks
 struct MC_TASKS_DLLAPI CompliantPostureTask : public PostureTask
 {
 public:
-    CompliantPostureTask(const mc_solver::QPSolver & solver, unsigned int rIndex, double stiffness, double weight);
+  CompliantPostureTask(const mc_solver::QPSolver & solver, unsigned int rIndex, double stiffness, double weight);
 
-    /** Change reference acceleration
-     *
-     * \p refAccel Should be of size nrDof
-     */
-    void refAccel(const Eigen::VectorXd & refAccel) noexcept;
+  /** Change reference acceleration
+   *
+   * \p refAccel Should be of size nrDof
+   */
+  void refAccel(const Eigen::VectorXd & refAccel) noexcept;
 
-    // Set task to be compliant or not
-    void makeCompliant(bool compliance);
-    // Get compliance state of the task
-    bool isCompliant(void);
+  // Set task to be compliant or not
+  void makeCompliant(bool compliance);
+  // Get compliance state of the task
+  bool isCompliant(void);
 
 protected:
-    void update(mc_solver::QPSolver & solver);
+  void update(mc_solver::QPSolver & solver);
 
-    void addToGUI(mc_rtc::gui::StateBuilder & gui);
+  void addToGUI(mc_rtc::gui::StateBuilder & gui);
 
-    bool isCompliant_;
+  bool isCompliant_;
 
-    mc_tvm::Robot & tvm_robot_;
+  mc_tvm::Robot & tvm_robot_;
 
-    Eigen::VectorXd refAccel_;
+  Eigen::VectorXd refAccel_;
 };
 
-}
+} // namespace mc_tasks

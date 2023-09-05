@@ -21,7 +21,7 @@ struct MC_TASKS_DLLAPI EndEffectorTask : public MetaTask
 public:
   /*! \brief Constructor
    *
-   * \pararm frame Control frame
+   * \param frame Control frame
    *
    * \param stiffness Task stiffness
    *

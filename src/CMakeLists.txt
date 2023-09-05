@@ -517,6 +517,7 @@ set(mc_tasks_SRC
     mc_tasks/lipm_stabilizer/ZMPCC.cpp
     mc_tasks/lipm_stabilizer/Contact.cpp
     mc_tasks/CompliantPostureTask.cpp
+    mc_tasks/CompliantEndEffectorTask.cpp
 )
 
 set(mc_tasks_HDR
@@ -554,6 +555,7 @@ set(mc_tasks_HDR
     ../include/mc_tasks/lipm_stabilizer/Contact.h
     ../include/mc_tasks/lipm_stabilizer/ZMPCC.h
     ../include/mc_tasks/CompliantPostureTask.h
+    ../include/mc_tasks/CompliantEndEffectorTask.h
 )
 
 add_library(mc_tasks SHARED ${mc_tasks_SRC} ${mc_tasks_HDR})
