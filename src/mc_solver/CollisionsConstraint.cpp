@@ -521,6 +521,12 @@ void CollisionsConstraint::update(QPSolver &)
         auto & fn = collConstr->getData(collId)->function;
         return fn->distance();
       }
+      case QPSolver::Backend::TVMHierarchical:
+      {
+        auto collConstr = tvm_hconstraint(constraint_);
+        auto & fn = collConstr->getData(collId)->function;
+        return fn->distance();
+      }
       default:
         mc_rtc::log::error_and_throw("Not implemented for this backend");
     }

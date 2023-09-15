@@ -109,6 +109,7 @@ void OrientationTask::addToLogger(mc_rtc::Logger & logger)
   TrajectoryBase::addToLogger(logger);
   logger.addLogEntry(name_ + "_target", this, [this]() { return Eigen::Quaterniond(orientation()); });
   logger.addLogEntry(name_, this, [this]() { return Eigen::Quaterniond(frame_->position().rotation()); });
+  logger.addLogEntry(name_ + "_curVel", this, [this]() { return frame_->velocity().angular(); });
 }
 
 } // namespace mc_tasks

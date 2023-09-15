@@ -14,9 +14,10 @@ CompliantPostureTask::CompliantPostureTask(const mc_solver::QPSolver & solver,
   tvm_robot_(solver.robots().robot(rIndex).tvmRobot()),
   refAccel_(Eigen::VectorXd::Zero(solver.robots().robot(rIndex).mb().nrDof()))
 {
-  if(backend_ != Backend::TVM)
+  if(backend_ == Backend::Tasks)
     mc_rtc::log::error_and_throw<std::runtime_error>(
-        "[mc_tasks] Can't use CompliantPostureTask with {} backend, please use TVM backend", backend_);
+        "[mc_tasks] Can't use CompliantEndEffectorTask with {} backend, please use TVM or TVMHierarchical backend",
+        backend_);
   name_ = "compliant_posture";
   type_ = "compliant_posture";
 }
