@@ -2,6 +2,53 @@
 
 ## [Unreleased]
 
+## [2.8.0] - 2023-09-19
+
+### Added
+
+- [mc_control] Added motor status to joint sensor (#395)
+- [mc_control/FSM] Posture tasks' reset can be disabled (#389)
+- [mc_rtc/Configuration] Added support for `std::variant` (#393)
+- [mc_rtc/Configuration] Added `Configuration::find` (#393)
+- [mc_rtc/GUI] Added form elements to provide more complex forms (#394)
+
+### Changes
+
+- [mc_control/FSM] FSM embedded in a Meta state no longer reset the posture at transition by default (#389)
+
+### Fixes
+
+- [mc_observers] KinematicInertial uses the correct function from state-observation (#391)
+- [mc_solver] Fix a crash in monitor activation
+- [mc_tvm] Correctly include refAccel in Orientation|PositionFunction
+
+## [2.7.0] - 2023-09-06
+
+### Added
+
+- [bindings] Add bindings for ControllerClient (#384)
+- [mc_rtc] Allow to override existing log entries (#383)
+- [mc_rtc] Allow "chunky" XY plot updates (#386)
+- [mc_solver] ConstraintSet now has an update mechanism (#381)
+- [Samples: CoM] Support the Pepper robot
+
+### Changes
+
+- [StabilizerTask] Improve force distribution and CoP horizon reference (#375)
+- [mc_rbdyn] Convex objects are now automatically updated (#385)
+- [mc_solver] Collision constraint automatically display distance arrows when the distance falls below the interaction distance (#381)
+
+### Fixes
+
+- [bindings] Fix build for Cython >= 3.0.0
+- [cmake] Fix issue with yaml-cpp >= 0.8.0
+- [mc_control] Fix logging of plugin performances (#383)
+- [mc_observers] KinematicInertial uses function from state-observation (#388)
+- [mc_rbdyn] Fix loading of devices with canonical robots (#379)
+- [mc_rbdyn] Fix compilation with geos >= 3.12.0
+- [Replay] Fix output replay on fixed-based robots
+- [Replay] Avoid precision issue when comparing controller timestep with replay timestep
+
 ## [2.6.0] - 2023-06-13
 
 ### General
@@ -714,7 +761,9 @@ mc_rtc website and tutorials are now available in [Japanese](https://jrl-umi3218
 
 Initial release
 
-[Unreleased]: https://github.com/jrl-umi3218/mc_rtc/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/jrl-umi3218/mc_rtc/compare/v2.8.0...HEAD
+[2.8.0]: https://github.com/jrl-umi3218/mc_rtc/releases/tag/v2.8.0
+[2.7.0]: https://github.com/jrl-umi3218/mc_rtc/releases/tag/v2.7.0
 [2.6.0]: https://github.com/jrl-umi3218/mc_rtc/releases/tag/v2.6.0
 [2.5.0]: https://github.com/jrl-umi3218/mc_rtc/releases/tag/v2.5.0
 [2.4.0]: https://github.com/jrl-umi3218/mc_rtc/releases/tag/v2.4.0
