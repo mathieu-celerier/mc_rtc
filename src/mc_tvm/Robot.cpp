@@ -21,7 +21,8 @@ static inline void updateVar(const std::vector<std::vector<double>> & value, tvm
 }
 
 Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
-: robot_(robot), normalAccB_(robot.mbc().bodyAccB.size(), sva::MotionVecd::Zero()), fd_(robot.mb()), jac_(robot_.mb(), robot.forceSensors()[0].parentBody())
+: robot_(robot), normalAccB_(robot.mbc().bodyAccB.size(), sva::MotionVecd::Zero()), fd_(robot.mb()),
+  jac_(robot_.mb(), robot.forceSensors()[0].parentBody())
 {
   limits_.ql = rbd::paramToVector(robot_.mb(), robot_.ql());
   limits_.qu = rbd::paramToVector(robot_.mb(), robot_.qu());
@@ -49,13 +50,15 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
       q_fb_ = q_->subvariable(tvm::Space(6, 7, 6), "qFloatingBase");
       q_joints_ = q_->subvariable(tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6),
                                   "qJoints", tvm::Space(6, 7, 6));
-      disturbed_q_= tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6).createVariable(robot.name()+"_disturbed_q");
+      disturbed_q_ = tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6)
+                         .createVariable(robot.name() + "_disturbed_q");
     }
     else
     {
       q_fb_ = q_->subvariable(tvm::Space(0), "qFloatingBase");
       q_joints_ = q_;
-      disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name()+"_disturbed_q");
+      disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof())
+                         .createVariable(robot.name() + "_disturbed_q");
     }
     Eigen::VectorXd mimicMultiplier = Eigen::VectorXd(0);
     std::unordered_map<size_t, tvm::VariablePtr> mimicLeaders;
@@ -236,7 +239,7 @@ void Robot::updateExternalDisturbance()
   auto rjo = robot_.refJointOrder();
   auto & ext_torques_sensor = robot_.device<mc_rbdyn::ExternalTorqueSensor>("externalTorqueSensor");
   tau_e_ = ext_torques_sensor.torques();
-  disturbance_ddq_ = H().inverse()*tau_e_;
+  disturbance_ddq_ = H().inverse() * tau_e_;
 
   // disturbed_ddq_->set(ddq_->value()+disturbance_ddq_);
   // mc_rtc::log::info("[mc_tvm::Robot] Disturbances:");
