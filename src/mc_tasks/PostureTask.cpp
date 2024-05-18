@@ -454,7 +454,7 @@ double PostureTask::damping() const
   }
 }
 
-inline void PostureTask::setGains(double s, double d)
+void PostureTask::setGains(double s, double d)
 {
   switch(backend_)
   {
@@ -673,4 +673,4 @@ static auto registered = mc_tasks::MetaTaskLoader::register_load_function(
       t->load(solver, config);
       return t;
     });
-}
+} // namespace

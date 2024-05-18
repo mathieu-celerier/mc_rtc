@@ -109,4 +109,4 @@ static auto registered = mc_solver::ConstraintSetLoader::register_load_function(
       }
       return std::make_shared<mc_solver::ContactConstraint>(solver.dt(), cType);
     });
-}
+} // namespace

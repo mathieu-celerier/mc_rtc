@@ -42,11 +42,9 @@ struct TVMBoundedSpeedConstr
 
   std::vector<BoundedSpeedData>::iterator getData(const mc_rbdyn::RobotFrame & frame)
   {
-    return std::find_if(data_.begin(), data_.end(),
-                        [&](const auto & d) {
-                          return d.fn->frame().name() == frame.name()
-                                 && d.fn->frame().robot().name() == frame.robot().name();
-                        });
+    return std::find_if(
+        data_.begin(), data_.end(), [&](const auto & d)
+        { return d.fn->frame().name() == frame.name() && d.fn->frame().robot().name() == frame.robot().name(); });
   }
 
   template<typename SolverT>
@@ -412,4 +410,4 @@ static auto registered = mc_solver::ConstraintSetLoader::register_load_function(
       }
       return ret;
     });
-}
+} // namespace

@@ -441,9 +441,8 @@ auto TVMQPSolver<SchemeT>::addVirtualContactImpl(const mc_rbdyn::Contact & conta
                          [this, contact]() { return desiredContactForce(contact); });
     gui_->addElement({"Contacts", "Forces"},
                      mc_rtc::gui::Force(
-                         fmt::format("{}::{}/{}::{}", r1.name(), f1.name(), r2.name(), f2.name()),
-                         [this, contact]() { return desiredContactForce(contact); },
-                         [&f1]() { return f1.position(); }));
+                         fmt::format("{}::{}/{}::{}", r1.name(), f1.name(), r2.name(), f2.name()), [this, contact]()
+                         { return desiredContactForce(contact); }, [&f1]() { return f1.position(); }));
   }
   else
   {

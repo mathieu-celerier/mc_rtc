@@ -294,4 +294,4 @@ static auto registered = mc_solver::ConstraintSetLoader::register_load_function(
           solver.robots(), robotIndexFromConfig(config, solver.robots(), "CoMIncPlane"), solver.dt());
       return ret;
     });
-}
+} // namespace
