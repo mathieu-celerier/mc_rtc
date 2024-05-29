@@ -44,21 +44,16 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   // Create TVM variables
   {
     q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof()).createVariable(robot.name());
-    disturbed_q_ = nullptr;
     if(robot.mb().nrJoints() > 0 && robot.mb().joint(0).type() == rbd::Joint::Free)
     {
       q_fb_ = q_->subvariable(tvm::Space(6, 7, 6), "qFloatingBase");
       q_joints_ = q_->subvariable(tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6),
                                   "qJoints", tvm::Space(6, 7, 6));
-      disturbed_q_ = tvm::Space(robot.mb().nrDof() - 6, robot.mb().nrParams() - 7, robot.mb().nrDof() - 6)
-                         .createVariable(robot.name() + "_disturbed_q");
     }
     else
     {
       q_fb_ = q_->subvariable(tvm::Space(0), "qFloatingBase");
       q_joints_ = q_;
-      disturbed_q_ = tvm::Space(robot.mb().nrDof(), robot.mb().nrParams(), robot.mb().nrDof())
-                         .createVariable(robot.name() + "_disturbed_q");
     }
     Eigen::VectorXd mimicMultiplier = Eigen::VectorXd(0);
     std::unordered_map<size_t, tvm::VariablePtr> mimicLeaders;
@@ -133,16 +128,11 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
   tau_ = tvm::Space(robot.mb().nrDof()).createVariable(robot.name() + "_tau");
   dq_ = tvm::dot(q_, 1);
   ddq_ = tvm::dot(q_, 2);
-  disturbed_dq_ = tvm::dot(disturbed_q_, 1);
-  disturbed_ddq_ = tvm::dot(disturbed_q_, 2);
   Eigen::VectorXd q_init = q_->value();
   rbd::paramToVector(robot.mbc().q, q_init);
   q_->set(q_init);
   dq_->setZero();
   ddq_->setZero();
-  disturbed_q_->set(q_init);
-  disturbed_dq_->setZero();
-  disturbed_ddq_->setZero();
   disturbance_ddq_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
   tau_->setZero();
   tau_e_ = Eigen::VectorXd::Zero(robot.mb().nrDof());
@@ -192,13 +182,11 @@ Robot::Robot(NewRobotToken, const mc_rbdyn::Robot & robot)
 void Robot::updateFK()
 {
   updateVar(robot_.mbc().q, *q_);
-  updateVar(robot_.mbc().q, *disturbed_q_);
 }
 
 void Robot::updateFV()
 {
   updateVar(robot_.mbc().alpha, *dq_);
-  updateVar(robot_.mbc().alpha, *disturbed_dq_);
 }
 
 void Robot::updateFA()

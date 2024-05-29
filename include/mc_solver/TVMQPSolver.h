@@ -55,7 +55,7 @@ struct MC_SOLVER_DLLAPI TVMQPSolver final : public QPSolver
    */
   static inline TVMQPSolver & from_solver(QPSolver & solver) noexcept
   {
-    assert(solver.backend() == QPSolver::Backend::TVM);
+    assert(solver.backend() == QPSolver::Backend::TVM || solver.backend() == QPSolver::Backend::TVMHierarchical);
     return static_cast<TVMQPSolver &>(solver);
   }
 
@@ -67,7 +67,7 @@ struct MC_SOLVER_DLLAPI TVMQPSolver final : public QPSolver
    */
   static inline const TVMQPSolver & from_solver(const QPSolver & solver) noexcept
   {
-    assert(solver.backend() == QPSolver::Backend::TVM);
+    assert(solver.backend() == QPSolver::Backend::TVM || solver.backend() == QPSolver::Backend::TVMHierarchical);
     return static_cast<const TVMQPSolver &>(solver);
   }
 

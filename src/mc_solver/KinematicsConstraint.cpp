@@ -5,7 +5,6 @@
 #include <mc_solver/KinematicsConstraint.h>
 
 #include <mc_solver/TasksQPSolver.h>
-#include <mc_tvm/DisturbanceCompensationFunction.h>
 
 #include <Tasks/Bounds.h>
 #include <Tasks/QPConstr.h>
@@ -73,14 +72,6 @@ void TVMKinematicsConstraint::addToSolver(SolverT & solver)
   auto aL = solver.problem().add(al <= tvm::dot(tvm_robot.qJoints(), 2) <= au, tvm::task_dynamics::None{},
                                  {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(aL);
-  // /** Constraint disturbed joint acceleration and joint acceleration difference to be equal to disturbances */
-  // auto eDist = std::make_shared<mc_tvm::DisturbanceCompensationFunction>(tvm_robot);
-  // auto aD = solver.problem().add(
-  //   eDist == 0.,
-  //   tvm::task_dynamics::None{},
-  //   tvm::requirements::PriorityLevel(0)
-  // );
-  // constraints_.push_back(aD);
 
   /** Mimic constraints */
   for(const auto & m : tvm_robot.mimics())

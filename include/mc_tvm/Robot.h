@@ -10,11 +10,11 @@
 
 #include <mc_rbdyn/Robot.h>
 
+#include <mc_rbdyn/ExternalTorqueSensor.h>
 #include <tvm/Variable.h>
 #include <tvm/VariableVector.h>
-#include <tvm/graph/abstract/Node.h>
 #include <tvm/function/BasicLinearFunction.h>
-#include <mc_rbdyn/ExternalTorqueSensor.h>
+#include <tvm/graph/abstract/Node.h>
 
 #include <RBDyn/FD.h>
 
@@ -88,59 +88,20 @@ public:
   /** Access q variable */
   inline tvm::VariablePtr & q() noexcept { return q_; }
 
-  /** Access disturbed q variable (const) */
-  inline const tvm::VariablePtr & qDisturbed() const noexcept
-  {
-    return disturbed_q_;
-  }
-  /** Access disturbed q variable */
-  inline tvm::VariablePtr & qDisturbed() noexcept
-  {
-    return disturbed_q_;
-  }
-
   /** Access q first derivative (joint velocity) (const) */
   inline const tvm::VariablePtr & alpha() const noexcept { return dq_; }
   /** Access q first derivative (joint velocity) */
   inline tvm::VariablePtr & alpha() noexcept { return dq_; }
-
-  /** Access disturbed q first derivative (joint acceleration) (const) */
-  inline const tvm::VariablePtr & alphaDisturbed() const noexcept
-  {
-    return disturbed_dq_;
-  }
-  /** Access disturbed q first derivative (joint acceleration) */
-  inline tvm::VariablePtr & alphaDisturbed() noexcept
-  {
-    return disturbed_dq_;
-  }
 
   /** Access q second derivative (joint acceleration) (const) */
   inline const tvm::VariablePtr & alphaD() const noexcept { return ddq_; }
   /** Access q second derivative (joint acceleration) */
   inline tvm::VariablePtr & alphaD() noexcept { return ddq_; }
 
-  /** Access disturbed q second derivative (joint acceleration) (const) */
-  inline const tvm::VariablePtr & alphaDDisturbed() const noexcept
-  {
-    return disturbed_ddq_;
-  }
-  /** Access disturbed q second derivative (joint acceleration) */
-  inline tvm::VariablePtr & alphaDDisturbed() noexcept
-  {
-    return disturbed_ddq_;
-  }
-
   /** Access disturbance on q second derivative (joint acceleration) (const) */
-  inline const Eigen::VectorXd & alphaDDisturbance() const noexcept
-  {
-    return disturbance_ddq_;
-  }
+  inline const Eigen::VectorXd & alphaDDisturbance() const noexcept { return disturbance_ddq_; }
   /** Access disturbance on q second derivative (joint acceleration) */
-  inline Eigen::VectorXd & alphaDDisturbance() noexcept
-  {
-    return disturbance_ddq_;
-  }
+  inline Eigen::VectorXd & alphaDDisturbance() noexcept { return disturbance_ddq_; }
 
   /** Access floating-base variable (const) */
   inline const tvm::VariablePtr & qFloatingBase() const noexcept { return q_fb_; }
@@ -181,15 +142,9 @@ public:
   inline tvm::VariablePtr & tau() { return tau_; }
 
   /** Access torque from external forces (const) */
-  inline const Eigen::VectorXd & tau_e() const noexcept
-  {
-    return tau_e_;
-  }
+  inline const Eigen::VectorXd & tau_e() const noexcept { return tau_e_; }
   /** Access torque from external forces variable */
-  inline Eigen::VectorXd & tau_e()
-  {
-    return tau_e_;
-  }
+  inline Eigen::VectorXd & tau_e() { return tau_e_; }
 
   /** Returns the CoM algorithm associated to this robot (const) */
   inline const CoM & comAlgo() const noexcept { return *com_; }
@@ -252,8 +207,6 @@ private:
   tvm::VariablePtr q_fb_;
   /** Joints variable */
   tvm::VariablePtr q_joints_;
-  /** Disturbed joints variable */
-  tvm::VariablePtr disturbed_q_;
   /** Generalized configuration variable */
   tvm::VariablePtr q_;
   /** Map mimic leader joint to their followers */
@@ -262,12 +215,7 @@ private:
   tvm::VariablePtr dq_;
   /** Double derivative of q */
   tvm::VariablePtr ddq_;
-  /** Disturbed derivative of q */
-  tvm::VariablePtr disturbed_dq_;
-  /** Disturbed double derivative of q */
-  tvm::VariablePtr disturbed_ddq_;
-  /** Difference between double derivative of q and disturbed double derivative of q */
-  // std::shared_ptr<>;
+
   /** Joint acceleration generated from external disturbance */
   Eigen::VectorXd disturbance_ddq_;
   /** Tau variable */
