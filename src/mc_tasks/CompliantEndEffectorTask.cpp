@@ -4,10 +4,10 @@
 
 #include <mc_tasks/CompliantEndEffectorTask.h>
 
+#include <mc_rtc/gui/ArrayInput.h>
 #include <mc_rtc/gui/Checkbox.h>
 #include <mc_tvm/Robot.h>
 #include <SpaceVecAlg/EigenTypedef.h>
-#include "mc_rtc/gui/ArrayInput.h"
 
 namespace mc_tasks
 {
@@ -38,7 +38,7 @@ void CompliantEndEffectorTask::refAccel(const Eigen::Vector6d & refAccel) noexce
   refAccel_ = refAccel;
 }
 
-void CompliantEndEffectorTask::makeCompliant(bool compliance)
+void CompliantEndEffectorTask::setCompliant(Eigen::Vector6d compliantValue)
 {
   if(compliance) { compliant_matrix_.diagonal().setOnes(); }
   else { compliant_matrix_.diagonal().setZero(); }
@@ -49,7 +49,7 @@ void CompliantEndEffectorTask::setComplianceVector(Eigen::Vector6d gamma)
   compliant_matrix_.diagonal() = gamma;
 }
 
-bool CompliantEndEffectorTask::isCompliant(void)
+Eigen::Vector6d CompliantEndEffectorTask::getCompliant(void)
 {
   return compliant_matrix_.diagonal().norm() > 0;
 }
@@ -77,6 +77,7 @@ void CompliantEndEffectorTask::update(mc_solver::QPSolver & solver)
   EndEffectorTask::orientationTask->refAccel(disturbedAccel.head(3));
 
   // EndEffectorTask::update(solver);
+  EndEffectorTask::update(solver);
 }
 
 void CompliantEndEffectorTask::addToGUI(mc_rtc::gui::StateBuilder & gui)

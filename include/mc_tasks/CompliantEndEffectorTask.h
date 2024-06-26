@@ -6,6 +6,7 @@
 
 #include <mc_tasks/EndEffectorTask.h>
 #include <RBDyn/MultiBody.h>
+#include <SpaceVecAlg/EigenTypedef.h>
 #include <Eigen/src/Core/Matrix.h>
 
 namespace mc_tasks
@@ -71,6 +72,8 @@ protected:
   rbd::Jacobian * jac_;
 
   Eigen::Vector6d refAccel_;
+
+  Eigen::Vector6d compliantValue_;
 };
 
 } // namespace mc_tasks
