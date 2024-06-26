@@ -4,8 +4,9 @@
 
 #include <mc_tasks/CompliantEndEffectorTask.h>
 
-#include <mc_rtc/gui/Checkbox.h>
+#include <mc_rtc/gui/ArrayInput.h>
 #include <mc_tvm/Robot.h>
+#include <SpaceVecAlg/EigenTypedef.h>
 
 namespace mc_tasks
 {
@@ -15,8 +16,8 @@ CompliantEndEffectorTask::CompliantEndEffectorTask(const std::string & bodyName,
                                                    unsigned int robotIndex,
                                                    double stiffness,
                                                    double weight)
-: EndEffectorTask(robots.robot(robotIndex).frame(bodyName), stiffness, weight), isCompliant_(false),
-  tvm_robot_(nullptr), rIdx_(robotIndex), bodyName_(bodyName), refAccel_(Eigen::Vector6d::Zero())
+: EndEffectorTask(robots.robot(robotIndex).frame(bodyName), stiffness, weight), tvm_robot_(nullptr),
+  rIdx_(robotIndex), bodyName_(bodyName), refAccel_(Eigen::Vector6d::Zero()), compliantValue_(Eigen::Vector6d::Zero())
 {
   const mc_rbdyn::RobotFrame & frame = robots.robot(robotIndex).frame(bodyName);
 
@@ -35,14 +36,14 @@ void CompliantEndEffectorTask::refAccel(const Eigen::Vector6d & refAccel) noexce
   refAccel_ = refAccel;
 }
 
-void CompliantEndEffectorTask::makeCompliant(bool compliance)
+void CompliantEndEffectorTask::setCompliant(Eigen::Vector6d compliantValue)
 {
-  isCompliant_ = compliance;
+  compliantValue_ = compliantValue;
 }
 
-bool CompliantEndEffectorTask::isCompliant(void)
+Eigen::Vector6d CompliantEndEffectorTask::getCompliant(void)
 {
-  return isCompliant_;
+  return compliantValue_;
 }
 
 void CompliantEndEffectorTask::addToSolver(mc_solver::QPSolver & solver)
@@ -55,6 +56,12 @@ void CompliantEndEffectorTask::addToSolver(mc_solver::QPSolver & solver)
 
 void CompliantEndEffectorTask::update(mc_solver::QPSolver & solver)
 {
+  auto J = jac_->jacobian(tvm_robot_->robot().mb(), tvm_robot_->robot().mbc());
+  Eigen::Vector6d disturbance = J * tvm_robot_->alphaDExternal();
+  Eigen::Vector6d disturbedAccel = refAccel_ + compliantValue_.asDiagonal() * disturbance;
+  EndEffectorTask::positionTask->refAccel(disturbedAccel.tail(3));
+  EndEffectorTask::orientationTask->refAccel(disturbedAccel.head(3));
+  /*
   if(isCompliant_)
   {
     // mc_rtc::log::info("{} compliant mode", bodyName_);
@@ -77,14 +84,15 @@ void CompliantEndEffectorTask::update(mc_solver::QPSolver & solver)
     EndEffectorTask::positionTask->refAccel(refAccel_.tail(3));
     EndEffectorTask::orientationTask->refAccel(refAccel_.head(3));
   }
+  */
   EndEffectorTask::update(solver);
 }
 
 void CompliantEndEffectorTask::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
-  gui.addElement({"Tasks", name_, "Compliance"}, mc_rtc::gui::Checkbox(
-                                                     "Compliance is active", [this]() { return isCompliant_; },
-                                                     [this]() { isCompliant_ = !isCompliant_; }));
+  gui.addElement({"Tasks", name_, "Compliance"}, mc_rtc::gui::ArrayInput("Compliance Value", {"rx", "ry", "rz", "x", "y", "z"},
+                                                              [this]() { return compliantValue_; },
+                                                              [this](const Eigen::Vector6d & v) { compliantValue_ = v; }));
 
   EndEffectorTask::addToGUI(gui);
 }

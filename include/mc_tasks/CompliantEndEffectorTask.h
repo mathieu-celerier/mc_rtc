@@ -6,6 +6,7 @@
 
 #include <mc_tasks/EndEffectorTask.h>
 #include <RBDyn/MultiBody.h>
+#include <SpaceVecAlg/EigenTypedef.h>
 
 namespace mc_tasks
 {
@@ -45,10 +46,10 @@ public:
   void refAccel(const Eigen::Vector6d & refAccel) noexcept;
 
   // Set the compliant behavior of the task
-  void makeCompliant(bool compliance);
+  void setCompliant(Eigen::Vector6d);
 
   // Get compliance state of the task
-  bool isCompliant(void);
+  Eigen::Vector6d getCompliant(void);
 
 protected:
   void addToSolver(mc_solver::QPSolver & solver);
@@ -57,7 +58,7 @@ protected:
 
   void addToGUI(mc_rtc::gui::StateBuilder & gui);
 
-  bool isCompliant_;
+  //bool isCompliant_;
 
   mc_tvm::Robot * tvm_robot_;
 
@@ -68,6 +69,8 @@ protected:
   rbd::Jacobian * jac_;
 
   Eigen::Vector6d refAccel_;
+
+  Eigen::Vector6d compliantValue_;
 };
 
 } // namespace mc_tasks
