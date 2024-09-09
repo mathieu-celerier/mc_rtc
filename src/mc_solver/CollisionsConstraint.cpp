@@ -113,7 +113,7 @@ struct TVMCollisionConstraint
     data.task = solver.problem().add(
         data.function >= 0.,
         tvm::task_dynamics::VelocityDamper(
-            solver.dt(), {col.iDist, col.sDist, col.damping, mc_solver::CollisionsConstraint::defaultDampingOffset},
+            solver.dt(), {col.iDist, col.sDist, col.damping, mc_solver::CollisionsConstraint::defaultDampingOffset, col.overDamping},
             tvm::constant::big_number),
         {tvm::requirements::PriorityLevel(0)});
   }
