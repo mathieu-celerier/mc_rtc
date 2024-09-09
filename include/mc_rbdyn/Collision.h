@@ -28,11 +28,26 @@ struct MC_RBDYN_DLLAPI Collision
             const std::optional<std::vector<std::string>> & r1Joints = {},
             const std::optional<std::vector<std::string>> & r2Joints = {},
             bool r1JointsInactive = false,
-            bool r2JointsInactive = false)
+            bool r2JointsInactive = false,
+            double m = 0)
   : body1(b1), body2(b2), iDist(i), sDist(s), damping(d), r1Joints(r1Joints), r2Joints(r2Joints),
-    r1JointsInactive(r1JointsInactive), r2JointsInactive(r2JointsInactive)
+    r1JointsInactive(r1JointsInactive), r2JointsInactive(r2JointsInactive), overDamping(m)
   {
   }
+  // Collision(const std::string & b1,
+  //           const std::string & b2,
+  //           double i,
+  //           double s,
+  //           double d,
+  //           double m,
+  //           const std::optional<std::vector<std::string>> & r1Joints = {},
+  //           const std::optional<std::vector<std::string>> & r2Joints = {},
+  //           bool r1JointsInactive = false,
+  //           bool r2JointsInactive = false)
+  // : body1(b1), body2(b2), iDist(i), sDist(s), damping(d), overDamping(m), r1Joints(r1Joints), r2Joints(r2Joints),
+  //   r1JointsInactive(r1JointsInactive), r2JointsInactive(r2JointsInactive)
+  // {
+  // }
   std::string body1; /** First body in the constraint */
   std::string body2; /** Second body in the constraint */
   double iDist; /** Interaction distance */
@@ -50,6 +65,7 @@ struct MC_RBDYN_DLLAPI Collision
       r2Joints; /** Active/Inactive joints in the second robot, ignored if r1 == r2 */
   bool r1JointsInactive = false; /** When true the selected joints in r1ActiveJoints are considered inactive */
   bool r2JointsInactive = false; /** When true the selected joints in r2ActiveJoints are considered inactive */
+  double overDamping; /** Over-damping */
   inline bool isNone() { return body1 == "NONE" && body2 == "NONE"; }
 
   bool operator==(const Collision & rhs) const;
