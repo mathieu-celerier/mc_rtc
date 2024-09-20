@@ -83,6 +83,10 @@ public:
    */
   void addCollisions(QPSolver & solver, const std::vector<mc_rbdyn::Collision> & cols);
 
+  void editCollisions(QPSolver & solver, const std::vector<mc_rbdyn::Collision> & cols);
+
+  void setCollisionsDampers(QPSolver & solver, const std::vector<double> & dampers);
+
   /** Returns true if the given collision is in this constraint */
   bool hasCollision(const std::string & c1, const std::string & c2) const noexcept;
 
@@ -132,6 +136,7 @@ private:
   std::pair<int, mc_rbdyn::Collision> __popCollId(const std::string & name1, const std::string & name2);
   /** Actually adds the collision to the constraint, handles id creation and wildcard support */
   void __addCollision(mc_solver::QPSolver & solver, const mc_rbdyn::Collision & col);
+  void __editCollision(mc_solver::QPSolver & solver, const mc_rbdyn::Collision & col);
 
   /* Internal management for collision display */
   bool autoMonitor_ = true;

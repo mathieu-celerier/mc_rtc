@@ -56,7 +56,7 @@ public:
    */
   KinematicsConstraint(const mc_rbdyn::Robots & robots,
                        unsigned int robotIndex,
-                       const std::array<double, 4> & damperSecond,
+                       const std::array<double, 5> & damperSecond,
                        double velocityPercent = 0.5);
 
 protected:
