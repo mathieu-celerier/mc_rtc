@@ -19,6 +19,7 @@
 
 #include <Tasks/QPConstr.h>
 
+#include "mc_rtc/logging.h"
 #include <tvm/task_dynamics/VelocityDamper.h>
 
 #include "utils/jointsToSelector.h"
@@ -58,7 +59,7 @@ struct TVMCollisionConstraint
   std::vector<CollisionData>::iterator removeOrDeleteCollision(TVMQPSolver & solver,
                                                                std::vector<CollisionData>::iterator it)
   {
-    if(it == data_.end()) { return data_.end(); }
+    if(it == data_.end()) { mc_rtc::log::info("je suis la"); return data_.end(); }
     if(it->task)
     {
       solver.problem().remove(*it->task);
@@ -110,14 +111,18 @@ struct TVMCollisionConstraint
   void addCollision(TVMQPSolver & solver, CollisionData & data)
   {
     const auto & col = data.collision;
+    mc_rtc::log::info("[CollisionsConstraint] Adding collision constraint with xsi={}, xsioff={}, m={}, lambda={}", col.damping, mc_solver::CollisionsConstraint::defaultDampingOffset,
+                      col.overDamping, col.lambda);
     data.task = solver.problem().add(
         data.function >= 0.,
         tvm::task_dynamics::VelocityDamper(
-            solver.dt(), {col.iDist, col.sDist, col.damping, mc_solver::CollisionsConstraint::defaultDampingOffset, col.overDamping},
+            solver.dt(), {col.iDist, col.sDist, col.damping, mc_solver::CollisionsConstraint::defaultDampingOffset, 
+            col.overDamping, col.lambda},
             tvm::constant::big_number),
         {tvm::requirements::PriorityLevel(0)});
   }
 };
+
 
 } // namespace details
 
@@ -168,7 +173,7 @@ CollisionsConstraint::CollisionsConstraint(const mc_rbdyn::Robots & robots,
                                            unsigned int r1Index,
                                            unsigned int r2Index,
                                            double timeStep)
-: constraint_(make_constraint(backend_, robots, timeStep)), r1Index(r1Index), r2Index(r2Index), collId(0), collIdDict()
+:constraint_(make_constraint(backend_, robots, timeStep)), r1Index(r1Index), r2Index(r2Index), collId(0), collIdDict()
 {
 }
 
@@ -361,6 +366,68 @@ void CollisionsConstraint::__addCollision(mc_solver::QPSolver & solver, const mc
   addMonitorButton(collId, col);
 }
 
+void CollisionsConstraint::__editCollision(mc_solver::QPSolver & solver, const mc_rbdyn::Collision & col)
+{
+  // Check for the correct backend
+  if(backend_ != QPSolver::Backend::TVM)
+  {
+    mc_rtc::log::error("[CollisionsConstraint] Editing collisions is only supported for TVM backend currently.");
+    return;
+  }
+
+  // Find the collision in the existing set of constraints
+  auto collIdIt = collIdDict.find(__keyByNames(col.body1, col.body2));
+  if(collIdIt == collIdDict.end())
+  {
+    mc_rtc::log::error("[CollisionsConstraint] Attempting to edit a non-existent collision: {} - {}", col.body1, col.body2);
+    return;
+  }
+
+  // Get the current collision data
+  int collId = collIdIt->second.first;
+
+  // Remove the existing collision
+  tvm_constraint(constraint_)->deleteCollision(tvm_solver(solver), col);
+
+  // Add the new collision with updated parameters
+  const auto & robots = solver.robots();
+  const mc_rbdyn::Robot & r1 = robots.robot(r1Index);
+  const mc_rbdyn::Robot & r2 = robots.robot(r2Index);
+
+  auto computeJointsSelector =
+      [&robots](const std::optional<std::vector<std::string>> & joints, bool inactive, auto rIndex)
+  {
+    if(joints)
+    {
+      // check that all joints exist
+      for(const auto & j : *joints)
+      {
+        if(!robots.robot(rIndex).hasJoint(j))
+        {
+          mc_rtc::log::error_and_throw("[CollisionsConstraint] No joint named \"{}\" in robot \"{}\"", j,
+                                       robots.robot(rIndex).name());
+        }
+      }
+      if(inactive) { return jointsToSelector<false>(robots.robot(rIndex), *joints); }
+      else { return jointsToSelector<true>(robots.robot(rIndex), *joints); }
+    }
+    else { return Eigen::VectorXd::Zero(0).eval(); }
+  };
+
+  auto r1Selector = computeJointsSelector(col.r1Joints, col.r1JointsInactive, r1Index);
+  auto r2Selector = r1Index == r2Index ? Eigen::VectorXd::Zero(0).eval()
+                                       : computeJointsSelector(col.r2Joints, col.r2JointsInactive, r2Index);
+
+  
+  auto & data =
+      tvm_constraint(constraint_)->createCollision(tvm_solver(solver), r1, r2, col, collId, r1Selector, r2Selector);
+
+  tvm_constraint(constraint_)->addCollision(tvm_solver(solver), data); 
+    
+  mc_rtc::log::info("[CollisionsConstraint] Edited collision: {} - {}", col.body1, col.body2);
+}
+
+
 void CollisionsConstraint::addMonitorButton(int collId, const mc_rbdyn::Collision & col)
 {
   if(gui_ && inSolver_)
@@ -463,6 +530,35 @@ void CollisionsConstraint::addCollisions(QPSolver & solver, const std::vector<mc
     default:
       break;
   }
+}
+
+void CollisionsConstraint::editCollisions(QPSolver & solver, const std::vector<mc_rbdyn::Collision> & cols)
+{
+  // Check if the backend is TVM, as editing collisions is only supported for TVM
+  if(backend_ != QPSolver::Backend::TVM)
+  {
+    mc_rtc::log::error("[CollisionsConstraint] Editing collisions is only supported for TVM backend currently.");
+    return;
+  }
+  // Clear the existing collisions
+  // tvm_constraint(constraint_)->clear();
+  // Iterate over the list of collisions and call __editCollision for each
+  for(const auto & col : cols)
+  {
+    __editCollision(solver, col);
+  }
+
+  mc_rtc::log::info("[CollisionsConstraint] Successfully edited {} collisions.", cols.size());
+}
+
+void CollisionsConstraint::setCollisionsDampers(QPSolver & solver, const std::vector<double> & dampers)
+{
+  for(auto & col : cols)
+  {
+    col.overDamping = dampers[0];
+    col.lambda = dampers[1];
+  }
+  editCollisions(solver, cols);
 }
 
 void CollisionsConstraint::addToSolverImpl(QPSolver & solver)

@@ -29,12 +29,12 @@ static mc_rtc::void_ptr initialize_tasks(const mc_rbdyn::Robots & robots, unsign
 TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
                                                  const std::array<double, 3> & damper,
                                                  double vp)
-: robot_(robot), damper_(damper), damperSecond_({0.0, 0.0, 0.0, 0.0}), velocityPercent_(vp)
+: robot_(robot), damper_(damper), damperSecond_({0.0, 0.0, 0.0, 0.0, 0.0}), velocityPercent_(vp)
 {
 }
 
 TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
-                                                 const std::array<double, 4> & damperSecond,
+                                                 const std::array<double, 5> & damperSecond,
                                                  double vp)
 : robot_(robot), damper_({0.0, 0.0, 0.0}), damperSecond_(damperSecond), velocityPercent_(vp)
 {
@@ -42,7 +42,7 @@ TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
 
 void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
 {
-  bool secondOrder =  damperSecond_[3] >= 1.0; // m overDamping >= 1.0
+  bool closeLoopSecondOrder =  damperSecond_[3] >= 1.0; // m overDamping >= 1.0
 
   auto & tvm_robot = robot_.tvmRobot();
   
@@ -55,9 +55,10 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
   Eigen::VectorXd di;
   Eigen::VectorXd ds;
 
-  if(secondOrder)
+  if(closeLoopSecondOrder)
   {
-    mc_rtc::log::info("Second order dynamics with damping: di= {}, ds= {}, xsi_offset= {}, m= {}", damperSecond_[0], damperSecond_[1], damperSecond_[2], damperSecond_[3]);
+    mc_rtc::log::info("[KinematicsConstraint] Second order dynamics with damping: di%= {}, ds%= {}, xsioff= {}, m= {}, lambda= {}", 
+    damperSecond_[0], damperSecond_[1], damperSecond_[2], damperSecond_[3], damperSecond_[4]);
     di = damperSecond_[0] * (qu - ql);
     ds = damperSecond_[1] * (qu - ql);
     for(int i = 0; i < nParams; ++i)
@@ -67,12 +68,15 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
         di(i) = 0.01;
         ds(i) = 0.005;
       }
+      // double lambda = 4* damperSecond_[3] * damperSecond_[3] * damperSecond_[2] / (di(i) - ds(i));
+      // mc_rtc::log::info("[KinematicsConstraint] lambda{}= {}", i, lambda);
     }
     auto jl = solver.problem().add(
         ql <= tvm_robot.qJoints() <= qu,
         tvm::task_dynamics::VelocityDamper(solver.dt(), {di, ds, Eigen::VectorXd::Constant(nParams, 1, 0),
                                                         Eigen::VectorXd::Constant(nParams, 1, damperSecond_[2]),
-                                                        Eigen::VectorXd::Constant(nParams, 1, damperSecond_[3])}),
+                                                        Eigen::VectorXd::Constant(nParams, 1, damperSecond_[3]),
+                                                        Eigen::VectorXd::Constant(nParams, 1, damperSecond_[4])}),
         {tvm::requirements::PriorityLevel(0)});
     constraints_.push_back(jl);
   }
@@ -149,7 +153,7 @@ static mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot, const std:
   return mc_rtc::make_void_ptr<TVMKinematicsConstraint>(robot, damper, vp);
 }
 
-static mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot, const std::array<double, 4> & damperSecond, double vp)
+static mc_rtc::void_ptr initialize_tvm(const mc_rbdyn::Robot & robot, const std::array<double, 5> & damperSecond, double vp)
 {
   return mc_rtc::make_void_ptr<TVMKinematicsConstraint>(robot, damperSecond, vp);
 }
@@ -236,7 +240,7 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
 static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
                                    const mc_rbdyn::Robots & robots,
                                    unsigned int robotIndex,
-                                   const std::array<double, 4> & damperSecond,
+                                   const std::array<double, 5> & damperSecond,
                                    double velocityPercent)
 {
   switch(backend)
@@ -259,7 +263,7 @@ KinematicsConstraint::KinematicsConstraint(const mc_rbdyn::Robots & robots,
 
 KinematicsConstraint::KinematicsConstraint(const mc_rbdyn::Robots & robots,
                                            unsigned int robotIndex,
-                                           const std::array<double, 4> & damperSecond,
+                                           const std::array<double, 5> & damperSecond,
                                            double velocityPercent)
 : constraint_(initialize(backend_, robots, robotIndex, damperSecond, velocityPercent))
 {
