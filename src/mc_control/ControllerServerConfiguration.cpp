@@ -18,10 +18,7 @@ void ControllerServerConfiguration::load(const mc_rtc::Configuration & config)
 {
   config("Timestep", timestep);
   if(auto ipc = config.find("IPC")) { (*ipc)("Socket", ipc_socket); }
-  else
-  {
-    ipc_socket = std::nullopt;
-  }
+  else { ipc_socket = std::nullopt; }
   auto socket_config = [&](const std::string & section, auto & opt_out)
   {
     using SocketT = typename std::remove_reference_t<decltype(opt_out)>::value_type;
@@ -31,15 +28,12 @@ void ControllerServerConfiguration::load(const mc_rtc::Configuration & config)
       (*cfg)("Host", opt_out->host);
       if(auto ports_cfg = cfg->find("Ports"))
       {
-        std::array<uint16_t, 2> ports = *ports_cfg;
+        auto ports = static_cast<std::array<uint16_t, 2>>(*ports_cfg);
         opt_out->pub_port = ports[0];
         opt_out->pull_port = ports[1];
       }
     }
-    else
-    {
-      opt_out = std::nullopt;
-    }
+    else { opt_out = std::nullopt; }
   };
   socket_config("TCP", tcp_config);
   socket_config("WS", websocket_config);
