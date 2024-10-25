@@ -18,7 +18,7 @@ CompliantPostureTask::CompliantPostureTask(const mc_solver::QPSolver & solver,
     mc_rtc::log::error_and_throw<std::runtime_error>(
         "[mc_tasks] Can't use CompliantEndEffectorTask with {} backend, please use TVM or TVMHierarchical backend",
         backend_);
-  name_ = "compliant_posture";
+  name_ = std::string("compliant_posture_") + solver.robots().robot(rIndex).name();
   type_ = "compliant_posture";
 }
 

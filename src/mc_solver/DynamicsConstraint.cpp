@@ -88,6 +88,20 @@ static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
   }
 }
 
+static mc_rtc::void_ptr initialize(QPSolver::Backend backend,
+                                   const mc_rbdyn::Robots & robots,
+                                   unsigned int robotIndex,
+                                   bool compensateExternalForces)
+{
+  switch(backend)
+  {
+    case QPSolver::Backend::TVM:
+      return initialize_tvm(robots.robot(robotIndex), compensateExternalForces);
+    default:
+      mc_rtc::log::error_and_throw("[DynamicsConstraint] Not implemented for solver backend: {}", backend);
+  }
+}
+
 DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        unsigned int robotIndex,
                                        double timeStep,
@@ -99,6 +113,7 @@ DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
 {
 }
 
+
 DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        unsigned int robotIndex,
                                        double timeStep,
@@ -108,6 +123,17 @@ DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
                                        bool compensateExternalForces)
 : KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent),
   motion_constr_(initialize(backend_, robots, robotIndex, timeStep, infTorque, compensateExternalForces)),
+  robotIndex_(robotIndex)
+{
+}
+
+DynamicsConstraint::DynamicsConstraint(const mc_rbdyn::Robots & robots,
+                                       unsigned int robotIndex,
+                                       const std::array<double, 5> & damperSecond,
+                                       double velocityPercent,
+                                       bool compensateExternalForces)
+: KinematicsConstraint(robots, robotIndex, damperSecond, velocityPercent),
+  motion_constr_(initialize(backend_, robots, robotIndex, compensateExternalForces)),
   robotIndex_(robotIndex)
 {
 }
