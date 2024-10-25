@@ -21,9 +21,8 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
-
+#pragma once
 #ifndef FMT_EIGEN_HPP
-
 #include <fmt/format.h>
 #include <Eigen/Dense>
 #include <regex>
