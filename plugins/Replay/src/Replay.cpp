@@ -46,6 +46,7 @@ void log_to_robot(const mc_rtc::log::FlatLog & log, mc_rbdyn::Robot & robot, boo
   }
   if(robot.mb().joint(0).dof() == 6) { robot.posW(get<sva::PTransformd>(log, "ff", robot.name(), is_main, idx)); }
 <<<<<<< HEAD
+<<<<<<< HEAD
   else
   {
     robot.forwardKinematics();
@@ -53,6 +54,9 @@ void log_to_robot(const mc_rtc::log::FlatLog & log, mc_rbdyn::Robot & robot, boo
 =======
   else { robot.forwardKinematics(); }
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+  else { robot.forwardKinematics(); }
+>>>>>>> dc575f6e9 (Fix plugins)
 }
 
 template<typename CppT>

@@ -9,10 +9,13 @@
 #include <mc_rtc/config.h>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <mc_rbdyn/Robots.h>
 
 =======
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
 #include <SpaceVecAlg/SpaceVecAlg>
 
 #include <Eigen/Geometry>
@@ -106,6 +109,7 @@ struct MC_RTC_ROS_DLLAPI ROSBridge
   static void stop_robot_publisher(const std::string & publisher);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** Remove the publisher of every removed robot
    *
    * \param robots Controller's robots
@@ -114,6 +118,8 @@ struct MC_RTC_ROS_DLLAPI ROSBridge
 
 =======
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
   /*! \brief Stop ROS */
   static void shutdown();
 

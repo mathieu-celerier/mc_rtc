@@ -38,10 +38,14 @@ private:
   bool publish_real = true;
   double publish_timestep = 0.01;
 <<<<<<< HEAD
+<<<<<<< HEAD
   size_t published_topics = 0;
 =======
   size_t published_env = 0;
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+  size_t published_env = 0;
+>>>>>>> dc575f6e9 (Fix plugins)
   std::unique_ptr<ROSServices> services_;
 
   void build(mc_control::MCGlobalController & controller);

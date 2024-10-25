@@ -34,6 +34,7 @@ void ROSPlugin::init(mc_control::MCGlobalController & controller, const mc_rtc::
 void ROSPlugin::reset(mc_control::MCGlobalController & controller)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
   auto publish_robots = [&controller](const std::string & prefix, mc_rbdyn::Robots & robots, bool use_real)
   {
     for(const auto & r : robots)
@@ -46,6 +47,8 @@ void ROSPlugin::reset(mc_control::MCGlobalController & controller)
 
   if(publish_real) { publish_robots("real/", controller.controller().realRobots(), true); }
 =======
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
   if(publish_control)
   {
     mc_rtc::ROSBridge::init_robot_publisher("control", controller.timestep(), controller.controller().outputRobot());
@@ -68,11 +71,15 @@ void ROSPlugin::reset(mc_control::MCGlobalController & controller)
     const auto & real_robot = controller.controller().outputRealRobot();
     mc_rtc::ROSBridge::init_robot_publisher("real", controller.timestep(), real_robot, true);
   }
+<<<<<<< HEAD
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
 }
 
 void ROSPlugin::after(mc_control::MCGlobalController & controller)
 {
+<<<<<<< HEAD
 <<<<<<< HEAD
   auto update_robots = [this, &controller](const std::string & prefix, mc_rbdyn::Robots & robots)
   {
@@ -84,6 +91,8 @@ void ROSPlugin::after(mc_control::MCGlobalController & controller)
 
   mc_rtc::ROSBridge::remove_extra_robot_publishers(controller.controller().robots());
 =======
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
   if(publish_control)
   {
     mc_rtc::ROSBridge::update_robot_publisher("control", controller.timestep(), controller.controller().outputRobot());
@@ -109,7 +118,10 @@ void ROSPlugin::after(mc_control::MCGlobalController & controller)
     auto & real_robot = controller.controller().outputRealRobot();
     mc_rtc::ROSBridge::update_robot_publisher("real", controller.timestep(), real_robot);
   }
+<<<<<<< HEAD
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+>>>>>>> dc575f6e9 (Fix plugins)
 }
 
 ROSPlugin::~ROSPlugin()
@@ -117,10 +129,14 @@ ROSPlugin::~ROSPlugin()
   mc_rtc::ROSBridge::stop_robot_publisher("control");
   mc_rtc::ROSBridge::stop_robot_publisher("real");
 <<<<<<< HEAD
+<<<<<<< HEAD
   for(size_t i = 0; i < published_topics; ++i)
 =======
   for(size_t i = 0; i < published_env; ++i)
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+  for(size_t i = 0; i < published_env; ++i)
+>>>>>>> dc575f6e9 (Fix plugins)
   {
     mc_rtc::ROSBridge::stop_robot_publisher("control/env_" + std::to_string(i + 1));
     mc_rtc::ROSBridge::stop_robot_publisher("real/env_" + std::to_string(i + 1));

@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 cmake_minimum_required(VERSION 3.5)
 =======
 cmake_minimum_required(VERSION 3.1)
 >>>>>>> f3cd587bb (Fix plugins folder)
+=======
+cmake_minimum_required(VERSION 3.1)
+>>>>>>> dc575f6e9 (Fix plugins)
 
 if(NOT DEFINED PROJECT_VERSION)
   set(PROJECT_VERSION 1.0.0)
