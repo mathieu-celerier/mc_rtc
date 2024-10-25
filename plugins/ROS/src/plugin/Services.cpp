@@ -11,10 +11,14 @@ ROSServices::ROSServices(mc_rtc::NodeHandlePtr nh, mc_control::MCGlobalControlle
 : nh_(nh), controller_(controller)
 {
   if(nh) { start_services(); }
+<<<<<<< HEAD
   else
   {
     mc_rtc::log::warning("ROS not available, services will not be enabled");
   }
+=======
+  else { mc_rtc::log::warning("ROS not available, services will not be enabled"); }
+>>>>>>> f3cd587bb (Fix plugins folder)
 }
 
 void ROSServices::start_services()
