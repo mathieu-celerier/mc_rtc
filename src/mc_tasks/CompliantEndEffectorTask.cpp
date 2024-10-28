@@ -38,7 +38,7 @@ void CompliantEndEffectorTask::refAccel(const Eigen::Vector6d & refAccel) noexce
   refAccel_ = refAccel;
 }
 
-void CompliantEndEffectorTask::setCompliant(Eigen::Vector6d compliantValue)
+void CompliantEndEffectorTask::makeCompliant(bool compliance)
 {
   if(compliance) { compliant_matrix_.diagonal().setOnes(); }
   else { compliant_matrix_.diagonal().setZero(); }
@@ -49,7 +49,7 @@ void CompliantEndEffectorTask::setComplianceVector(Eigen::Vector6d gamma)
   compliant_matrix_.diagonal() = gamma;
 }
 
-Eigen::Vector6d CompliantEndEffectorTask::getCompliant(void)
+bool CompliantEndEffectorTask::isCompliant(void)
 {
   return compliant_matrix_.diagonal().norm() > 0;
 }

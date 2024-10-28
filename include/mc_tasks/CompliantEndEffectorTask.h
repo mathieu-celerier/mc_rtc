@@ -74,8 +74,6 @@ protected:
   rbd::Jacobian * jac_;
 
   Eigen::Vector6d refAccel_;
-
-  Eigen::Vector6d compliantValue_;
 };
 
 } // namespace mc_tasks
