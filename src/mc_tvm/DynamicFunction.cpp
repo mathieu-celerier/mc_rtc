@@ -111,6 +111,7 @@ void DynamicFunction::updateb()
   if(compensateExternalForces_)
   {
     b_ -= robot_.tvmRobot().tauExternal();
+    // mc_rtc::log::info("Compensating for : {}", robot_.tvmRobot().tauExternal().transpose());
     if(robot_.hasDevice<mc_rbdyn::VirtualTorqueSensor>("virtualTorqueSensor"))
     {
       b_ += robot_.device<mc_rbdyn::VirtualTorqueSensor>("virtualTorqueSensor").torques();
