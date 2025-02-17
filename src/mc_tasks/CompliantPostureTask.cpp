@@ -2,6 +2,7 @@
 
 #include <mc_rtc/gui/Checkbox.h>
 #include <mc_tvm/Robot.h>
+#include "mc_rtc/gui/ArrayInput.h"
 
 namespace mc_tasks
 {
@@ -10,7 +11,8 @@ CompliantPostureTask::CompliantPostureTask(const mc_solver::QPSolver & solver,
                                            unsigned int rIndex,
                                            double stiffness,
                                            double weight)
-: PostureTask(solver, rIndex, stiffness, weight), isCompliant_(false),
+: PostureTask(solver, rIndex, stiffness, weight),
+  gamma_(Eigen::VectorXd::Zero(solver.robots().robot(rIndex).mb().nrDof())),
   tvm_robot_(solver.robots().robot(rIndex).tvmRobot()),
   refAccel_(Eigen::VectorXd::Zero(solver.robots().robot(rIndex).mb().nrDof()))
 {
@@ -29,32 +31,37 @@ void CompliantPostureTask::refAccel(const Eigen::VectorXd & refAccel) noexcept
 
 void CompliantPostureTask::update(mc_solver::QPSolver & solver)
 {
-  if(isCompliant_)
-  {
-    Eigen::VectorXd disturbance = tvm_robot_.alphaDExternal();
-    // mc_rtc::log::info("Ref accel from disturbance : {}", disturbance.transpose());
-    Eigen::VectorXd disturbedAccel = refAccel_ + disturbance;
-    PostureTask::refAccel(disturbedAccel);
-  }
-  else { PostureTask::refAccel(refAccel_); }
+  Eigen::VectorXd disturbance = tvm_robot_.alphaDExternal();
+  // mc_rtc::log::info("Ref accel from disturbance : {}", disturbance.transpose());
+  Eigen::VectorXd disturbedAccel = refAccel_ + gamma_.asDiagonal() * disturbance;
+  PostureTask::refAccel(disturbedAccel);
   PostureTask::update(solver);
 }
 
 void CompliantPostureTask::makeCompliant(bool compliance)
 {
-  isCompliant_ = compliance;
+  if(compliance) { gamma_.setOnes(); }
+  else { gamma_.setZero(); }
+}
+
+void CompliantPostureTask::makeCompliant(Eigen::VectorXd gamma)
+{
+  gamma_ = gamma;
 }
 
 bool CompliantPostureTask::isCompliant(void)
 {
-  return isCompliant_;
+  return gamma_.norm() > 0;
 }
 
 void CompliantPostureTask::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
-  gui.addElement({"Tasks", name_, "Compliance"}, mc_rtc::gui::Checkbox(
-                                                     "Compliance is active", [this]() { return isCompliant_; },
-                                                     [this]() { isCompliant_ = !isCompliant_; }));
+  gui.addElement(
+      {"Tasks", name_, "Compliance"},
+      mc_rtc::gui::Checkbox(
+          "Compliance is active", [this]() { return isCompliant(); }, [this]() { makeCompliant(!isCompliant()); }),
+      mc_rtc::gui::ArrayInput("Gamma", {"Joint_1", "Joint_2", "Joint_3", "Joint_4", "Joint_5", "Joint_6", "Joint_7"},
+                              gamma_));
   PostureTask::addToGUI(gui);
 }
 

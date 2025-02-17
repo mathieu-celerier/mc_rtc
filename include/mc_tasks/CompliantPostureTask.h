@@ -22,6 +22,7 @@ public:
 
   // Set task to be compliant or not
   void makeCompliant(bool compliance);
+  void makeCompliant(Eigen::VectorXd gamma);
   // Get compliance state of the task
   bool isCompliant(void);
 
@@ -30,7 +31,7 @@ protected:
 
   void addToGUI(mc_rtc::gui::StateBuilder & gui);
 
-  bool isCompliant_;
+  Eigen::VectorXd gamma_;
 
   mc_tvm::Robot & tvm_robot_;
 
