@@ -36,7 +36,8 @@ TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
 TVMKinematicsConstraint::TVMKinematicsConstraint(const mc_rbdyn::Robot & robot,
                                                  const std::array<double, 5> & damperSecond,
                                                  double vp)
-: robot_(robot), damper_({0.0, 0.0, 0.0}), damperSecond_(damperSecond), velocityPercent_(vp)
+: robot_(robot), damper_({damperSecond[0], damperSecond[1], damperSecond[2]}), damperSecond_(damperSecond),
+  velocityPercent_(vp)
 {
 }
 
@@ -106,10 +107,9 @@ void TVMKinematicsConstraint::addToSolver(mc_solver::TVMQPSolver & solver)
   auto nDof = tvm_robot.qJoints()->space().tSize();
   auto vl = tvm_robot.limits().vl.segment(startDof, nDof) * velocityPercent_;
   auto vu = tvm_robot.limits().vu.segment(startDof, nDof) * velocityPercent_;
-  auto vL = solver.problem().add(
-      vl <= tvm::dot(tvm_robot.qJoints()) <= vu,
-      tvm::task_dynamics::Proportional((closeLoopSecondOrder) ? damperSecond_[4] : 1 / solver.dt()),
-      {tvm::requirements::PriorityLevel(0)});
+  auto vL = solver.problem().add(vl <= tvm::dot(tvm_robot.qJoints()) <= vu,
+                                 tvm::task_dynamics::Proportional((closeLoopSecondOrder) ? damperSecond_[4] : 100),
+                                 {tvm::requirements::PriorityLevel(0)});
   constraints_.push_back(vL);
   /** Acceleration limits */
   auto al = tvm_robot.limits().al.segment(startDof, nDof);
