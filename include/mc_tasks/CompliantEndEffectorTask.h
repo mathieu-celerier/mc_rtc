@@ -53,6 +53,8 @@ public:
   bool isCompliant(void);
   Eigen::Vector6d getComplianceVector(void);
 
+  void load(mc_solver::QPSolver & solver, const mc_rtc::Configuration & config) override;
+
 protected:
   void addToSolver(mc_solver::QPSolver & solver);
 

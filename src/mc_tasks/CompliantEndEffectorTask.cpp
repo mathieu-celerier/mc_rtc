@@ -79,6 +79,53 @@ void CompliantEndEffectorTask::update(mc_solver::QPSolver & solver)
   // EndEffectorTask::update(solver);
 }
 
+void CompliantEndEffectorTask::load(mc_solver::QPSolver & solver, const mc_rtc::Configuration & config)
+{
+  MetaTask::load(solver, config);
+  if(config.has("stiffness"))
+  {
+    auto s = config("stiffness");
+    if(s.size())
+    {
+      Eigen::VectorXd stiff = s;
+      positionTask->stiffness(stiff);
+      orientationTask->stiffness(stiff);
+    }
+    else
+    {
+      double stiff = s;
+      positionTask->stiffness(stiff);
+      orientationTask->stiffness(stiff);
+    }
+  }
+  if(config.has("damping"))
+  {
+    auto d = config("damping");
+    if(d.size())
+    {
+      positionTask->setGains(positionTask->dimStiffness(), d);
+      orientationTask->setGains(orientationTask->dimStiffness(), d);
+    }
+    else
+    {
+      positionTask->setGains(positionTask->stiffness(), d);
+      orientationTask->setGains(orientationTask->stiffness(), d);
+    }
+  }
+  if(config.has("compliance"))
+  {
+    auto g = config("compliance");
+    if(g.size()) { setComplianceVector(g); }
+    else { makeCompliant((double)g != 0); }
+  }
+  if(config.has("weight"))
+  {
+    double w = config("weight");
+    positionTask->weight(w);
+    orientationTask->weight(w);
+  }
+}
+
 void CompliantEndEffectorTask::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
   gui.addElement({"Tasks", name_, "Compliance"}, mc_rtc::gui::Checkbox(

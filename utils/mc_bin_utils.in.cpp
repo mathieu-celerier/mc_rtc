@@ -411,7 +411,7 @@ int extract(int argc, char * argv[])
       return;
     }
     size_t upper = static_cast<size_t>(std::pow(10.0, static_cast<double>(prev_w)));
-    for(size_t i = 0; i < upper; ++i)
+    for(size_t i = 0; i < upper - 1; ++i)
     {
       std::stringstream ss_old;
       ss_old << out << "_" << std::setfill('0') << std::setw(static_cast<int>(prev_w)) << (i + 1) << ".bin";
