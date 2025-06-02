@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <mc_tasks/EndEffectorTask.h>
+#include <mc_tasks/OrientationTask.h>
 #include <RBDyn/MultiBody.h>
 #include <Eigen/src/Core/Matrix.h>
 
@@ -15,9 +15,9 @@ namespace mc_tasks
  *
  * This task is a thin wrapper around the appropriate tasks in Tasks.
  * The task objective is given in the world frame. For relative control
- * see mc_tasks::RelativeCompliantEndEffectorTask
+ * see mc_tasks::RelativeCompliantOrientationTask
  */
-struct MC_TASKS_DLLAPI CompliantEndEffectorTask : public EndEffectorTask
+struct MC_TASKS_DLLAPI CompliantOrientationTask : public OrientationTask
 {
 public:
   /*! \brief Constructor
@@ -33,25 +33,25 @@ public:
    * \param weight Task weight
    *
    */
-  CompliantEndEffectorTask(const std::string & bodyName,
+  CompliantOrientationTask(const std::string & bodyName,
                            const mc_rbdyn::Robots & robots,
                            unsigned int robotIndex,
-                           double stiffness,
-                           double weight);
+                           double stiffness = 2.0,
+                           double weight = 500.0);
 
   /** Change acceleration
    *
    * \p refAccel Should be of size 6
    */
-  void refAccel(const Eigen::Vector6d & refAccel) noexcept;
+  void refAccel(const Eigen::Vector3d & refAccel) noexcept;
 
   // Set the compliant behavior of the task
   void makeCompliant(bool compliance);
-  void setComplianceVector(Eigen::Vector6d gamma);
+  void setComplianceVector(Eigen::Vector3d gamma);
 
   // Get compliance state of the task
   bool isCompliant(void);
-  Eigen::Vector6d getComplianceVector(void);
+  Eigen::Vector3d getComplianceVector(void);
 
   void load(mc_solver::QPSolver & solver, const mc_rtc::Configuration & config) override;
 
@@ -62,18 +62,17 @@ protected:
 
   void addToGUI(mc_rtc::gui::StateBuilder & gui);
 
-  Eigen::MatrixXd compliant_matrix_;
+  Eigen::Matrix3d compliant_matrix_;
 
   mc_tvm::Robot * tvm_robot_;
 
   unsigned int rIdx_;
 
   std::string bodyName_;
-  const mc_rbdyn::RobotFrame & frame_;
 
   rbd::Jacobian * jac_;
 
-  Eigen::Vector6d refAccel_;
+  Eigen::Vector3d refAccel_;
 };
 
 } // namespace mc_tasks

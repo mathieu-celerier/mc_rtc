@@ -31,9 +31,9 @@ void CompliantPostureTask::refAccel(const Eigen::VectorXd & refAccel) noexcept
 
 void CompliantPostureTask::update(mc_solver::QPSolver & solver)
 {
-  Eigen::VectorXd disturbance = tvm_robot_.alphaDExternal();
+  Eigen::VectorXd disturbance = (gamma_.asDiagonal() * tvm_robot_.alphaDExternal()).tail(tvm_robot_.qJoints()->size());
   // mc_rtc::log::info("Ref accel from disturbance : {}", disturbance.transpose());
-  Eigen::VectorXd disturbedAccel = refAccel_ + gamma_.asDiagonal() * disturbance;
+  Eigen::VectorXd disturbedAccel = refAccel_ + disturbance;
   PostureTask::refAccel(disturbedAccel);
   PostureTask::update(solver);
 }

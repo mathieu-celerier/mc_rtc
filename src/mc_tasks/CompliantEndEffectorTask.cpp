@@ -19,17 +19,15 @@ CompliantEndEffectorTask::CompliantEndEffectorTask(const std::string & bodyName,
                                                    double weight)
 : EndEffectorTask(robots.robot(robotIndex).frame(bodyName), stiffness, weight),
   compliant_matrix_(Eigen::Matrix6d::Zero()), tvm_robot_(nullptr), rIdx_(robotIndex), bodyName_(bodyName),
-  refAccel_(Eigen::Vector6d::Zero())
+  frame_(robots.robot(robotIndex).frame(bodyName)), refAccel_(Eigen::Vector6d::Zero())
 {
-  const mc_rbdyn::RobotFrame & frame = robots.robot(robotIndex).frame(bodyName);
-
   if(backend_ == Backend::Tasks)
     mc_rtc::log::error_and_throw<std::runtime_error>(
         "[mc_tasks] Can't use CompliantEndEffectorTask with {} backend, please use TVM or TVMHierarchical backend",
         backend_);
 
   type_ = "compliant_body6d";
-  name_ = "compliant_body6d_" + frame.robot().name() + "_" + frame.name();
+  name_ = "compliant_body6d_" + frame_.robot().name() + "_" + frame_.name();
   EndEffectorTask::name(name_);
 }
 
@@ -61,10 +59,9 @@ Eigen::Vector6d CompliantEndEffectorTask::getComplianceVector(void)
 
 void CompliantEndEffectorTask::addToSolver(mc_solver::QPSolver & solver)
 {
-  tvm_robot_ = &solver.robots().robot(rIdx_).tvmRobot();
-  jac_ = new rbd::Jacobian(tvm_robot_->robot().mb(), bodyName_);
-
   EndEffectorTask::addToSolver(solver);
+  tvm_robot_ = &solver.robots().robot(rIdx_).tvmRobot();
+  jac_ = new rbd::Jacobian(tvm_robot_->robot().mb(), frame_.body());
 }
 
 void CompliantEndEffectorTask::update(mc_solver::QPSolver & solver)
