@@ -25,9 +25,10 @@ BOOST_AUTO_TEST_CASE(TestCanonicalRobot)
   auto & robot = robots->robot();
 
   BOOST_REQUIRE(mc_rbdyn::check_module_compatibility(*rm, *rmc));
-  BOOST_REQUIRE(robot.devices().size() == 1);
-  BOOST_REQUIRE(canonicalRobot.devices().size() == 1);
+  BOOST_REQUIRE(robot.devices().size() == 2);
+  BOOST_REQUIRE(canonicalRobot.devices().size() == 2);
   BOOST_REQUIRE(robot.devices()[0]->name() == canonicalRobot.devices()[0]->name());
+  BOOST_REQUIRE(robot.devices()[1]->name() == canonicalRobot.devices()[1]->name());
 
   auto filteredLinks =
       std::vector<std::string>{"R_UTHUMB_S", "R_LTHUMB_S", "R_UINDEX_S", "R_LINDEX_S", "R_ULITTLE_S", "R_LLITTLE_S",

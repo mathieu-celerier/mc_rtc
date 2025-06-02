@@ -2,6 +2,7 @@
 #include <mc_rbdyn/Robots.h>
 #include <mc_rbdyn/rpy_utils.h>
 #include <boost/test/unit_test.hpp>
+#include "mc_rbdyn/VirtualTorqueSensor.h"
 #include "utils.h"
 #include <chrono>
 #include <random>
@@ -59,6 +60,7 @@ void TestRobotLoadingCommon(mc_rbdyn::RobotModulePtr rm, mc_rbdyn::RobotModulePt
   for(const auto & s : robot.surfaces()) { BOOST_REQUIRE(robotCopy.hasSurface(s.first)); }
   for(const auto & fs : robot.forceSensors()) { BOOST_REQUIRE(robotCopy.hasForceSensor(fs.name())); }
   for(const auto & bs : robot.bodySensors()) { BOOST_REQUIRE(robotCopy.hasBodySensor(bs.name())); }
+  BOOST_REQUIRE(robotCopy.hasDevice<mc_rbdyn::VirtualTorqueSensor>("ExtTorquesVirtSensor"));
 
   robots_ptr->removeRobot("robotCopy");
   BOOST_REQUIRE(!robots_ptr->hasRobot("robotCopy"));

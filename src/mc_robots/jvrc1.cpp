@@ -2,6 +2,7 @@
  * Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
+#include "mc_rbdyn/VirtualTorqueSensor.h"
 #ifndef JVRC_DESCRIPTION_PATH
 #  error "JVRC_DESCRIPTION_PATH must be defined to build this RobotModule"
 #endif
@@ -99,6 +100,8 @@ JVRC1RobotModule::JVRC1RobotModule(bool fixed, bool filter_mimics)
   _forceSensors.push_back(mc_rbdyn::ForceSensor("LeftFootForceSensor", "L_ANKLE_P_S", sva::PTransformd::Identity()));
   _forceSensors.push_back(mc_rbdyn::ForceSensor("RightHandForceSensor", "R_WRIST_Y_S", sva::PTransformd::Identity()));
   _forceSensors.push_back(mc_rbdyn::ForceSensor("LeftHandForceSensor", "L_WRIST_Y_S", sva::PTransformd::Identity()));
+
+  _devices.emplace_back(new mc_rbdyn::VirtualTorqueSensor("ExtTorquesVirtSensor", mb.nrDof()));
 
   _bodySensors.emplace_back("Accelerometer", "PELVIS_S", sva::PTransformd(Eigen::Vector3d(-0.0325, 0, 0.1095)));
   _bodySensors.emplace_back("FloatingBase", "PELVIS_S", sva::PTransformd::Identity());
