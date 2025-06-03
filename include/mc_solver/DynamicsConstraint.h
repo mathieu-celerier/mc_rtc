@@ -28,8 +28,15 @@ public:
    * \param robotIndex The index of the robot affected by this constraint
    * \param timeStep Solver timestep
    * \param infTorque If true, ignore the torque limits set in the robot model
+   * \param compensateExtTorques If true, compensates an estimation of external torques disturbance. The constraint will
+   * search for this estimation in robot's device, specifically looking for a mc_rbdyn::VirtualTorqueSensor named
+   * "ExtTorquesVirtSensor" if not availlable an error is thrown.
    */
-  DynamicsConstraint(const mc_rbdyn::Robots & robots, unsigned int robotIndex, double timeStep, bool infTorque = false);
+  DynamicsConstraint(const mc_rbdyn::Robots & robots,
+                     unsigned int robotIndex,
+                     double timeStep,
+                     bool infTorque = false,
+                     bool compensateExtTorques = false);
 
   /** Constructor
    * Builds a damped joint limits constraint and a motion constr depending on
@@ -42,13 +49,17 @@ public:
    * offset}
    * \param velocityPercent Maximum joint velocity percentage, 0.5 is advised
    * \param infTorque If true, ignore the torque limits set in the robot model
+   * \param compensateExtTorques If true, compensates an estimation of external torques disturbance. The constraint will
+   * search for this estimation in robot's device, specifically looking for a mc_rbdyn::VirtualTorqueSensor named
+   * "ExtTorquesVirtSensor" if not availlable an error is thrown.
    */
   DynamicsConstraint(const mc_rbdyn::Robots & robots,
                      unsigned int robotIndex,
                      double timeStep,
                      const std::array<double, 3> & damper,
                      double velocityPercent = 1.0,
-                     bool infTorque = false);
+                     bool infTorque = false,
+                     bool compensateExtTorques = false);
 
   /** Returns the tasks::qp::MotionConstr
    *
