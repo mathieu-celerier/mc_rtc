@@ -39,14 +39,19 @@ public:
   /** Destructor */
   ~VirtualTorqueSensor() noexcept override;
 
-  inline const Eigen::VectorXd & torques() const { return virtualJointTorques_; }
+  inline const Eigen::VectorXd & torques() const { return virtJointTorques_; }
 
-  inline void torques(Eigen::VectorXd & torques) { virtualJointTorques_ = torques; }
+  inline void torques(Eigen::VectorXd & torques) { virtJointTorques_ = torques; }
+
+  inline const Eigen::VectorXd & equivalentAcc() const { return virtJointAccelerations_; }
+
+  inline void equivalentAcc(Eigen::VectorXd & accelerations) { virtJointAccelerations_ = accelerations; }
 
   DevicePtr clone() const override;
 
 private:
-  Eigen::VectorXd virtualJointTorques_;
+  Eigen::VectorXd virtJointTorques_;
+  Eigen::VectorXd virtJointAccelerations_;
   int size_;
 };
 

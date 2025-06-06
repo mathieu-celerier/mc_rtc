@@ -6,13 +6,15 @@ namespace mc_rbdyn
 VirtualTorqueSensor::VirtualTorqueSensor() : VirtualTorqueSensor("", 0) {}
 
 VirtualTorqueSensor::VirtualTorqueSensor(const std::string & name, const int & size)
-: Device(name), virtualJointTorques_(Eigen::VectorXd::Zero(size)), size_(size)
+: Device(name), virtJointTorques_(Eigen::VectorXd::Zero(size)), virtJointAccelerations_(Eigen::VectorXd::Zero(size)),
+  size_(size)
 {
 }
 
 VirtualTorqueSensor::VirtualTorqueSensor(const VirtualTorqueSensor & ets) : VirtualTorqueSensor(ets.name_, ets.size_)
 {
-  virtualJointTorques_ = ets.virtualJointTorques_;
+  virtJointTorques_ = ets.virtJointTorques_;
+  virtJointAccelerations_ = ets.virtJointAccelerations_;
 }
 
 VirtualTorqueSensor & VirtualTorqueSensor::operator=(const VirtualTorqueSensor & ets)
@@ -21,7 +23,8 @@ VirtualTorqueSensor & VirtualTorqueSensor::operator=(const VirtualTorqueSensor &
   name_ = ets.name_;
   parent_ = ets.parent_;
   X_p_s_ = ets.X_p_s_;
-  virtualJointTorques_ = ets.virtualJointTorques_;
+  virtJointTorques_ = ets.virtJointTorques_;
+  virtJointAccelerations_ = ets.virtJointAccelerations_;
   return *this;
 }
 
