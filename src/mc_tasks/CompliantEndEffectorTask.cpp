@@ -47,6 +47,11 @@ void CompliantEndEffectorTask::setComplianceVector(Eigen::Vector6d gamma)
   compliant_matrix_.diagonal() = gamma;
 }
 
+void CompliantEndEffectorTask::setComplianceMatrix(Eigen::Matrix6d Gamma)
+{
+  compliant_matrix_ = Gamma;
+}
+
 bool CompliantEndEffectorTask::isCompliant(void)
 {
   return compliant_matrix_.diagonal().norm() > 0;
