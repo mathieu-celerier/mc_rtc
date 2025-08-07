@@ -48,6 +48,7 @@ public:
   // Set the compliant behavior of the task
   void makeCompliant(bool compliance);
   void setComplianceVector(Eigen::Vector6d gamma);
+  void setComplianceMatrix(Eigen::Matrix6d Gamma);
 
   // Get compliance state of the task
   bool isCompliant(void);
