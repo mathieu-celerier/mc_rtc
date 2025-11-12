@@ -2,14 +2,6 @@
  * Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-#include <mc_rbdyn/Robots.h>
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
-#include <mc_rbdyn/Robots.h>
->>>>>>> dc575f6e9 (Fix plugins)
 #include <mc_rtc/config.h>
 #include <mc_rtc/logging.h>
 #include <mc_rtc/utils.h>
@@ -25,17 +17,11 @@
 #  include <sensor_msgs/msg/joint_state.hpp>
 #  include <std_msgs/msg/string.hpp>
 
-<<<<<<< HEAD
 #  include <rclcpp/rclcpp.hpp>
 #else
 #  include <geometry_msgs/WrenchStamped.h>
 #  include <mc_rtc_msgs/JointSensors.h>
 #  include <nav_msgs/Odometry.h>
-=======
-#  include <rclcpp/init_options.hpp>
-#  include <rclcpp/rclcpp.hpp>
-#else
->>>>>>> dc575f6e9 (Fix plugins)
 #  include <sensor_msgs/Imu.h>
 #  include <sensor_msgs/JointState.h>
 
@@ -421,18 +407,8 @@ void RobotPublisherImpl::update(double, const mc_rbdyn::Robot & robot)
   data.odom.header.seq = data.js.header.seq;
 #endif
   data.odom.header.stamp = data.js.header.stamp;
-<<<<<<< HEAD
-<<<<<<< HEAD
   const auto & odom_p = robot.posW().translation();
   Eigen::Quaterniond odom_q(robot.posW().rotation());
-=======
-  const auto & odom_p = robot.bodySensor().position();
-  Eigen::Quaterniond odom_q = robot.bodySensor().orientation();
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
-  const auto & odom_p = robot.bodySensor().position();
-  Eigen::Quaterniond odom_q = robot.bodySensor().orientation();
->>>>>>> dc575f6e9 (Fix plugins)
   data.odom.pose.pose.position.x = odom_p.x();
   data.odom.pose.pose.position.y = odom_p.y();
   data.odom.pose.pose.position.z = odom_p.z();
@@ -442,25 +418,11 @@ void RobotPublisherImpl::update(double, const mc_rbdyn::Robot & robot)
   data.odom.pose.pose.orientation.z = odom_q.z();
   data.odom.pose.covariance.fill(0);
   /* Provide linear and angular velocity */
-<<<<<<< HEAD
-<<<<<<< HEAD
   const auto & vel = robot.velW().linear();
   data.odom.twist.twist.linear.x = vel.x();
   data.odom.twist.twist.linear.y = vel.y();
   data.odom.twist.twist.linear.z = vel.z();
   const auto & rate = robot.velW().angular();
-=======
-=======
->>>>>>> dc575f6e9 (Fix plugins)
-  const auto & vel = robot.bodySensor().linearVelocity();
-  data.odom.twist.twist.linear.x = vel.x();
-  data.odom.twist.twist.linear.y = vel.y();
-  data.odom.twist.twist.linear.z = vel.z();
-  const auto & rate = robot.bodySensor().angularVelocity();
-<<<<<<< HEAD
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
   data.odom.twist.twist.angular.x = rate.x();
   data.odom.twist.twist.angular.y = rate.y();
   data.odom.twist.twist.angular.z = rate.z();
@@ -623,15 +585,7 @@ inline bool ros_init([[maybe_unused]] const std::string & name)
   if(ros::ok()) { return true; }
   int argc = 0;
 #ifdef MC_RTC_ROS_IS_ROS2
-<<<<<<< HEAD
-<<<<<<< HEAD
   rclcpp::init(argc, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::SigTerm);
-=======
-  rclcpp::init(argc, nullptr);
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
-  rclcpp::init(argc, nullptr, rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::SigTerm);
->>>>>>> dc575f6e9 (Fix plugins)
 #else
   ros::init(argc, nullptr, name.c_str(), ros::init_options::NoSigintHandler);
   if(!ros::master::check())
@@ -683,6 +637,12 @@ void ROSBridge::set_publisher_timestep(double timestep)
   }
 }
 
+double ROSBridge::get_publisher_timestep()
+{
+  static const auto & impl = impl_();
+  return impl.publish_rate;
+}
+
 void ROSBridge::init_robot_publisher(const std::string & publisher,
                                      double dt,
                                      const mc_rbdyn::Robot & robot,
@@ -715,8 +675,6 @@ void ROSBridge::stop_robot_publisher(const std::string & publisher)
   impl.rpubs.erase(it);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 void ROSBridge::remove_extra_robot_publishers(const mc_rbdyn::Robots & robots)
 {
   static auto & impl = impl_();
@@ -737,10 +695,6 @@ void ROSBridge::remove_extra_robot_publishers(const mc_rbdyn::Robots & robots)
   }
 }
 
-=======
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
 void ROSBridge::shutdown()
 {
 #ifdef MC_RTC_ROS_IS_ROS2

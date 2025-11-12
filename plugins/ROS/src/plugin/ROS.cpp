@@ -33,8 +33,6 @@ void ROSPlugin::init(mc_control::MCGlobalController & controller, const mc_rtc::
 
 void ROSPlugin::reset(mc_control::MCGlobalController & controller)
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
   auto publish_robots = [&controller](const std::string & prefix, mc_rbdyn::Robots & robots, bool use_real)
   {
     for(const auto & r : robots)
@@ -46,41 +44,10 @@ void ROSPlugin::reset(mc_control::MCGlobalController & controller)
   publish_robots("control/", controller.controller().robots(), false);
 
   if(publish_real) { publish_robots("real/", controller.controller().realRobots(), true); }
-=======
-=======
->>>>>>> dc575f6e9 (Fix plugins)
-  if(publish_control)
-  {
-    mc_rtc::ROSBridge::init_robot_publisher("control", controller.timestep(), controller.controller().outputRobot());
-  }
-  if(publish_env)
-  {
-    auto publish_env = [&controller](const std::string & prefix, mc_rbdyn::Robots & robots, bool use_real)
-    {
-      for(size_t i = 1; i < robots.size(); ++i)
-      {
-        mc_rtc::ROSBridge::init_robot_publisher(prefix + "_" + std::to_string(i), controller.timestep(),
-                                                robots.robot(i), use_real);
-      }
-    };
-    publish_env("control/env", controller.controller().outputRobots(), false);
-    if(publish_real) { publish_env("real/env", controller.controller().outputRealRobots(), true); }
-  }
-  if(publish_real)
-  {
-    const auto & real_robot = controller.controller().outputRealRobot();
-    mc_rtc::ROSBridge::init_robot_publisher("real", controller.timestep(), real_robot, true);
-  }
-<<<<<<< HEAD
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
 }
 
 void ROSPlugin::after(mc_control::MCGlobalController & controller)
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
   auto update_robots = [this, &controller](const std::string & prefix, mc_rbdyn::Robots & robots)
   {
     for(auto & r : robots) { mc_rtc::ROSBridge::update_robot_publisher(prefix + r.name(), controller.timestep(), r); }
@@ -90,53 +57,13 @@ void ROSPlugin::after(mc_control::MCGlobalController & controller)
   if(publish_real) { update_robots("real/", controller.controller().realRobots()); }
 
   mc_rtc::ROSBridge::remove_extra_robot_publishers(controller.controller().robots());
-=======
-=======
->>>>>>> dc575f6e9 (Fix plugins)
-  if(publish_control)
-  {
-    mc_rtc::ROSBridge::update_robot_publisher("control", controller.timestep(), controller.controller().outputRobot());
-  }
-  // Publish environment state
-  if(publish_env)
-  {
-    auto update_env = [this, &controller](const std::string & prefix, mc_rbdyn::Robots & robots)
-    {
-      for(size_t i = 1; i < robots.size(); ++i)
-      {
-        mc_rtc::ROSBridge::update_robot_publisher(prefix + "_" + std::to_string(i), controller.timestep(),
-                                                  robots.robot(i));
-      }
-      published_env = std::max<size_t>(publish_env, robots.size() - 1);
-    };
-    update_env("control/env", controller.controller().outputRobots());
-    if(publish_real) { update_env("real/env", controller.controller().outputRealRobots()); }
-  }
-  // Publish real robot
-  if(publish_real)
-  {
-    auto & real_robot = controller.controller().outputRealRobot();
-    mc_rtc::ROSBridge::update_robot_publisher("real", controller.timestep(), real_robot);
-  }
-<<<<<<< HEAD
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
 }
 
 ROSPlugin::~ROSPlugin()
 {
   mc_rtc::ROSBridge::stop_robot_publisher("control");
   mc_rtc::ROSBridge::stop_robot_publisher("real");
-<<<<<<< HEAD
-<<<<<<< HEAD
   for(size_t i = 0; i < published_topics; ++i)
-=======
-  for(size_t i = 0; i < published_env; ++i)
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
-  for(size_t i = 0; i < published_env; ++i)
->>>>>>> dc575f6e9 (Fix plugins)
   {
     mc_rtc::ROSBridge::stop_robot_publisher("control/env_" + std::to_string(i + 1));
     mc_rtc::ROSBridge::stop_robot_publisher("real/env_" + std::to_string(i + 1));

@@ -8,14 +8,8 @@
 
 #include <mc_rtc/config.h>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 #include <mc_rbdyn/Robots.h>
 
-=======
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
 #include <SpaceVecAlg/SpaceVecAlg>
 
 #include <Eigen/Geometry>
@@ -75,7 +69,16 @@ struct MC_RTC_ROS_DLLAPI ROSBridge
    */
   static void set_publisher_timestep(double timestep);
 
-  /** Update the robot publisher state
+  /** Gets publisher timestep
+   *
+   * \return Update timestep in ms
+   *
+   */
+  static double get_publisher_timestep();
+
+  /** Initialize a robot publisher
+   *
+   * \note This should only be used on robots owned by the controller. Use RobotPublisher for external robots
    *
    * \param publisher Name of the publisher
    *
@@ -93,6 +96,8 @@ struct MC_RTC_ROS_DLLAPI ROSBridge
 
   /** Update the robot publisher state
    *
+   * \note This should only be used on robots owned by the controller. Use RobotPublisher for external robots
+   *
    * \param publisher Name of the publisher
    *
    * \param dt Controller timestep
@@ -108,18 +113,12 @@ struct MC_RTC_ROS_DLLAPI ROSBridge
    */
   static void stop_robot_publisher(const std::string & publisher);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   /** Remove the publisher of every removed robot
    *
    * \param robots Controller's robots
    */
   static void remove_extra_robot_publishers(const mc_rbdyn::Robots & robots);
 
-=======
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
->>>>>>> dc575f6e9 (Fix plugins)
   /*! \brief Stop ROS */
   static void shutdown();
 

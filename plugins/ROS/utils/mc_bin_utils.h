@@ -14,18 +14,10 @@ inline std::map<std::string, mc_rtc::log::LogType> entries(const mc_rtc::log::Fl
   {
     auto t = log.type(e);
     if(t != mc_rtc::log::LogType::None) { ret[e] = t; }
-<<<<<<< HEAD
-<<<<<<< HEAD
     else
     {
       mc_rtc::log::warning("{} cannot be converted into a flat log", e);
     }
-=======
-    else { mc_rtc::log::warning("{} cannot be converted into a flat log", e); }
->>>>>>> f3cd587bb (Fix plugins folder)
-=======
-    else { mc_rtc::log::warning("{} cannot be converted into a flat log", e); }
->>>>>>> dc575f6e9 (Fix plugins)
   }
   return ret;
 }
