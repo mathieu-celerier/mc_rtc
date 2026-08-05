@@ -13,8 +13,33 @@
 
   outputs =
     inputs:
+    let
+      # How to build mc_rtc from this very tree, and nothing else. Kept separate from the
+      # standalone-flake settings below (mc-rtc-nix.*, mc-rtc-superbuild.*) because those are
+      # this flake's own choices and must not follow the packaging into downstream flakes that
+      # import `flakeModule`.
+      mcRtcModule =
+        { lib, ... }:
+        {
+          overrideAttrs.mc-rtc =
+            { drv-prev, pkgs-final, ... }:
+            {
+              src = lib.cleanSource ./.;
+              # FIXME: enable testing:
+              # - testing fails in nix build
+              # - testRobotModule fails in nix devel
+              cmakeFlags = (drv-prev.cmakeFlags or [ ]) ++ [ (lib.cmakeBool "BUILD_TESTING" true) ];
+              nativeBuildInputs = drv-prev.nativeBuildInputs ++ [ pkgs-final.ninja ];
+              nativeCheckInputs = [
+                # workaround for some tests trying to write to /homeless-shelter
+                pkgs-final.writableTmpDirAsHomeHook
+              ];
+              doCheck = false;
+            };
+        };
+    in
     inputs.flake-parts.lib.mkFlake { inherit inputs; } (
-      { lib, ... }:
+      args@{ lib, ... }:
       {
         systems = import inputs.systems;
         imports = [
@@ -32,30 +57,19 @@
                 shells.defaultShells.release = true;
                 shells.defaultShells.devel = false;
               };
-            flakoboros = {
-              overrideAttrs.tasks = { pkgs-final, ... }: {
-                src = pkgs-final.fetchFromGitHub {
-                  owner = "jrl-umi3218";
-                  repo = "Tasks";
-                  tag = "v1.9.2";
-                  hash = "sha256-afZbxXd2uQVpDL97sXyxIrbFqa76JGc0s0ZAPzHcpsQ=";
-                };
-
-              };
-              overrideAttrs.mc-rtc =
-                { drv-prev, pkgs-final, ... }:
+            # Standalone build only: PR #531 builds against upstream Tasks v1.9.2. Not part of
+            # the exported flakeModule, so downstream stacks (mc-rtc-kinova-external-forces) keep
+            # supplying their own Tasks.
+            flakoboros = lib.recursiveUpdate (mcRtcModule args) {
+              overrideAttrs.tasks =
+                { pkgs-final, ... }:
                 {
-                  src = lib.cleanSource ./.;
-                  # FIXME: enable testing:
-                  # - testing fails in nix build
-                  # - testRobotModule fails in nix devel
-                  cmakeFlags = (drv-prev.cmakeFlags or [ ]) ++ [ (lib.cmakeBool "BUILD_TESTING" true) ];
-                  nativeBuildInputs = drv-prev.nativeBuildInputs ++ [ pkgs-final.ninja ];
-                  nativeCheckInputs = [
-                    # workaround for some tests trying to write to /homeless-shelter
-                    pkgs-final.writableTmpDirAsHomeHook
-                  ];
-                  doCheck = false;
+                  src = pkgs-final.fetchFromGitHub {
+                    owner = "jrl-umi3218";
+                    repo = "Tasks";
+                    tag = "v1.9.2";
+                    hash = "sha256-afZbxXd2uQVpDL97sXyxIrbFqa76JGc0s0ZAPzHcpsQ=";
+                  };
                 };
             };
           }
@@ -81,5 +95,10 @@
             };
           };
       }
-    );
+    )
+    // {
+      # Lets downstream flakes build *this* mc_rtc without restating how: they import this and
+      # drop their own `overrideAttrs.mc-rtc`. Mirrors mc-rtc-kinova-base / -external-forces.
+      flakeModule = args: { flakoboros = mcRtcModule args; };
+    };
 }
