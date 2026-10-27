@@ -381,12 +381,16 @@ void TasksQPSolver::updateNrVars(const mc_rbdyn::Robots & robots)
 
 double TasksQPSolver::solveTime()
 {
-  return mc_rtc::duration_ms(solver_.solveTime()).count();
+  // Compat with the Tasks fork pinned by mc-rtc-kinova-external-forces, which predates Tasks'
+  // removal of boost::timer and still returns boost::timer::cpu_times (wall in nanoseconds).
+  return static_cast<double>(solver_.solveTime().wall) * 1e-6;
 }
 
 double TasksQPSolver::solveAndBuildTime()
 {
-  return mc_rtc::duration_ms(solver_.solveAndBuildTime()).count();
+  // Compat with the Tasks fork pinned by mc-rtc-kinova-external-forces, which predates Tasks'
+  // removal of boost::timer and still returns boost::timer::cpu_times (wall in nanoseconds).
+  return static_cast<double>(solver_.solveAndBuildTime().wall) * 1e-6;
 }
 
 const Eigen::VectorXd & TasksQPSolver::result() const
